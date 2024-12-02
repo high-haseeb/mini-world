@@ -1,10 +1,11 @@
 "use client";
-import { OrbitControls } from '@react-three/drei'
+import { Box, OrbitControls } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import vertexShader from '@/shaders/vertShader.glsl';
-import fragmentShader from '@/shaders/fragShader.glsl';
+import React, { useEffect, useMemo, useRef } from 'react'
+import vertexShader from '@/shaders/world/vert.glsl';
+import fragmentShader from '@/shaders/world/frag.glsl';
 import { useControls } from 'leva';
+import FireParticleSystem from './Fire';
 
 const Experience = () => {
     return (
@@ -13,6 +14,7 @@ const Experience = () => {
                 <OrbitControls />
                 <ambientLight />
                 <directionalLight position={[10, 0, 10]} />
+                <FireParticleSystem />
                 <World />
             </Canvas>
         </div>
