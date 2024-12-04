@@ -1,20 +1,20 @@
 "use client";
-import { Box, OrbitControls } from '@react-three/drei'
+import { Box, OrbitControls, useTexture } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
 import React, { useEffect, useMemo, useRef } from 'react'
 import vertexShader from '@/shaders/world/vert.glsl';
 import fragmentShader from '@/shaders/world/frag.glsl';
 import { useControls } from 'leva';
-import FireParticleSystem from './Fire';
+import Fire from './Fire';
 
 const Experience = () => {
     return (
         <div className="w-full h-full">
-            <Canvas className="w-full h-full">
+            <Canvas className="w-full h-full" camera={{position: [0, 0, -7]}}>
                 <OrbitControls />
                 <ambientLight />
                 <directionalLight position={[10, 0, 10]} />
-                <FireParticleSystem />
+                {/* <Fire /> */}
                 <World />
             </Canvas>
         </div>
@@ -23,21 +23,21 @@ const Experience = () => {
 
 const World = () => {
     const matRef = useRef(null);
-    const { noiseOffset, displacementScale, waterLevel, grassLevel } = useControls(
+    const { noiseOffset, displacementScale, waterLevel } = useControls(
         {
             noiseOffset: { value: 0.2, min: -10, max: 10 },
             displacementScale: { value: 0.4, min: 0, max: 1.0 },
-            waterLevel: { value: -0.1, min: -1.0, max: 1.0 },
-            grassLevel: { value: 0.14, min: -1.0, max: 1.0 }
+            waterLevel: { value: 0.0, min: -1.0, max: 1.0 },
         }
     );
 
+    const WaterNormalTex = useTexture("/textures/water-nor.jpeg");
     const uniforms = useMemo(() => ({
         uOffset: { value: noiseOffset },
         uDispScale: { value: displacementScale },
         uTime: { value: 0.0 },
-        uGrassLevel: { value: grassLevel },
         uWaterLevel: { value: waterLevel },
+        WaterNormalTex: { value: WaterNormalTex },
     }), []);
 
     useEffect(() => {
@@ -52,11 +52,6 @@ const World = () => {
 
     useEffect(() => {
         if (!matRef.current.uniforms) return;
-        matRef.current.uniforms.uGrassLevel.value = grassLevel;
-    }, [grassLevel])
-
-    useEffect(() => {
-        if (!matRef.current.uniforms) return;
         matRef.current.uniforms.uWaterLevel.value = waterLevel;
     }, [waterLevel])
 
@@ -67,7 +62,7 @@ const World = () => {
 
     return (
         <mesh>
-            <icosahedronGeometry args={[2, 10]} />
+            <icosahedronGeometry args={[2, 40]} />
             <shaderMaterial
                 ref={matRef}
                 vertexShader={vertexShader}
