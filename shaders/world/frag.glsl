@@ -5,7 +5,6 @@ varying vec3 vPosition;
 varying vec3 vNormal;
 varying float vDisp;
 
-// Control wave sharpness and speed
 #define WAVE_SHARPNESS 50.0
 #define WAVE_SPEED 1.0
 
@@ -38,7 +37,8 @@ void main() {
 
     if (vDisp > uWaterLevel) {
         vec3 color1 = mix(LAND_COLOR_1, LAND_COLOR_1 * 0.0, vDisp);
-        color = mix(color1, LAND_COLOR_2, step(0.1, vDisp));
+        vec3 color2 = mix(LAND_COLOR_2, LAND_COLOR_2 * 0.8, -step(0.2, vDisp));
+        color = mix(color1, color2, step(0.1, vDisp));
     } else if (vDisp < uWaterLevel && vDisp + 0.05 > uWaterLevel) {
         color = mix(vec3(0.8, 0.8, 0.8), WATER_COLOR_1, step(0.5, waveEffect));
     } else {

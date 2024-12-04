@@ -1,5 +1,5 @@
 "use client";
-import { Box, OrbitControls, useTexture } from '@react-three/drei'
+import {  OrbitControls, useTexture } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
 import React, { useEffect, useMemo, useRef } from 'react'
 import vertexShader from '@/shaders/world/vert.glsl';
@@ -10,7 +10,7 @@ import Fire from './Fire';
 const Experience = () => {
     return (
         <div className="w-full h-full">
-            <Canvas className="w-full h-full" camera={{position: [0, 0, -7]}}>
+            <Canvas className="w-full h-full" camera={{ position: [0, 0, -7] }}>
                 <OrbitControls />
                 <ambientLight />
                 <directionalLight position={[10, 0, 10]} />
