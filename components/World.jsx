@@ -86,7 +86,6 @@ const World = () => {
         for (let i = 0; i < positions.count; i++) {
             const vertex = new THREE.Vector3().fromBufferAttribute(positions, i).normalize();
             positions.setXYZ(i, vertex.x, vertex.y, vertex.z);
-            // vertex.fromBufferAttribute(positions, i).normalize();
 
             // Convert normalized sphere coordinates to spherical UV
             const u = 0.5 + Math.atan2(vertex.z, vertex.x) / (2 * Math.PI);
@@ -99,11 +98,12 @@ const World = () => {
         positions.needsUpdate = true;
         geometry.computeVertexNormals();
 
+        geometry.scale(2, 2, 2);
         return geometry;
     };
 
     const geometryRef = useMemo(() => {
-        return createUVSphereFromCube(2, 64);
+        return createUVSphereFromCube(1, 64);
     }, []);
 
     const handlePointerDown = (e) => {
@@ -129,6 +129,7 @@ const World = () => {
             onPointerDown={handlePointerDown}
             geometry={geometryRef}
         >
+            {/* <icosahedronGeometry args={[2, 40]}/> */}
             <shaderMaterial
                 ref={matRef}
                 vertexShader={vertexShader}
