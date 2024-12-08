@@ -7,6 +7,7 @@ uniform float uWaterLevel;
 varying vec3 vPosition;
 varying vec3 vNormal;
 varying float vDisp;
+varying vec2 vUv;
 
 //	Classic Perlin 3D Noise
 //	by Stefan Gustavson (https://github.com/stegu/webgl-noise)
@@ -286,16 +287,20 @@ float cnoise(vec4 P, vec4 rep) {
     return 2.2 * n_xyzw;
 }
 
-void main() {
+void main()
+{
     vPosition = position;
     vNormal = normal;
+    vUv = uv;
 
     float baseDisplacement = cnoise(vec4(position, uOffset)) + (uOffset * 0.1);
     float displacement = baseDisplacement;
     vDisp = displacement;
-    if (displacement < uWaterLevel) {
+    if (displacement < uWaterLevel) 
+    {
         displacement = 0.0;
     }
+
     vec3 finalPosition = vec3(position + normal * displacement * uDispScale);
     gl_Position = projectionMatrix * modelViewMatrix * vec4(finalPosition, 1.0);
 }
