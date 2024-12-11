@@ -158,7 +158,7 @@ const World = () => {
                         (Math.random() - 0.5) * 0.2
                     );
                     raindrop.position.copy(randomCloud.position.clone().sub(randomCloud.position.clone().multiplyScalar(0.1)).add(offset));
-                    raindrop.velocity.copy(randomCloud.normal.clone().multiplyScalar(-0.02));
+                    raindrop.velocity.copy(randomCloud.normal.clone().multiplyScalar(-0.005));
                 }
             }
 
