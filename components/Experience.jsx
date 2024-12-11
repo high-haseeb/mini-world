@@ -1,5 +1,5 @@
 "use client";
-import { OrbitControls } from '@react-three/drei'
+import { Environment, OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import World from './World';
 

@@ -1,14 +1,15 @@
 'use client';
-
-import { useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import vertexShader from '@/shaders/world/vert.glsl';
 import fragmentShader from '@/shaders/world/frag.glsl';
 import { useControls } from 'leva';
+import { Cloud } from '@react-three/drei';
+
+const NUM_RAINDROPS = 500;
 
 const World = () => {
-
     const canvasRef = useMemo(() => {
         const canvas = document.createElement("canvas");
         canvas.width = 512;
@@ -25,7 +26,7 @@ const World = () => {
     }, [canvasRef]);
 
     const matRef = useRef();
-    const { offset, dispScale } = useControls({ offset: { value: 0.3, step: 0.1 }, dispScale: { value: 0.2, step: 0.1 } })
+    const { offset, dispScale } = useControls({ offset: { value: 0.3, step: 0.1 }, dispScale: { value: 0.2, step: 0.1 } });
 
     const uniforms = useMemo(() => ({
         uTime: { value: 0.0 },
@@ -41,11 +42,11 @@ const World = () => {
 
     useEffect(() => {
         matRef.current.uniforms.uOffset.value = offset;
-    }, [offset])
+    }, [offset]);
 
     useEffect(() => {
         matRef.current.uniforms.uDispScale.value = dispScale;
-    }, [dispScale])
+    }, [dispScale]);
 
     useFrame(({ clock }) => {
         if (matRef.current?.uniforms) {
@@ -83,28 +84,26 @@ const World = () => {
     }, []);
 
     const { scene } = useThree();
+    const [clouds, setClouds] = useState([]);
+
+    const raindropData = useMemo(() => {
+        const data = [];
+        for (let i = 0; i < NUM_RAINDROPS; i++) {
+            data.push({
+                position: new THREE.Vector3(),
+                velocity: new THREE.Vector3(),
+                reset: () => { },
+            });
+        }
+        return data;
+    }, []);
 
     const handlePointerDown = (e) => {
         e.stopPropagation();
-        const intersectionPoint = e.point.clone(); // Intersection point on the sphere
-        const normal = intersectionPoint.clone().normalize(); // Normal at the intersection point
-
-        // Create a cube
-        const cube = new THREE.Mesh(
-            new THREE.BoxGeometry(0.2, 0.2, 0.2),
-            new THREE.MeshNormalMaterial()
-        );
-
-        // Position the cube at the intersection point
-        cube.position.copy(intersectionPoint);
-
-        // Align the cube's rotation to the sphere's surface
-        const up = new THREE.Vector3(0, 1, 0); // Default up vector
-        const quaternion = new THREE.Quaternion().setFromUnitVectors(up, normal);
-        cube.quaternion.copy(quaternion);
-
-        // Add the cube to the scene
-        scene.add(cube);
+        const intersectionPoint = e.point.clone();
+        const normal = intersectionPoint.clone().normalize();
+        const cloudPosition = intersectionPoint.clone().addScaledVector(normal, 0.5);
+        setClouds((prev) => [...prev, { position: cloudPosition, normal }]);
 
         const uv = e.uv;
         if (!uv) return;
@@ -121,20 +120,99 @@ const World = () => {
         textureRef.needsUpdate = true;
     };
 
+    const raindropRef = useRef();
+    const lineGeometryRef = useRef(new THREE.BufferGeometry());
+    const positions = useRef(new Float32Array(NUM_RAINDROPS * 6)); // 2 points for each raindrop (start and end)
+
+    // Initialize raindrop positions
+    useEffect(() => {
+        for (let i = 0; i < NUM_RAINDROPS; i++) {
+            positions.current[i * 6 + 0] = 0; // Start position x
+            positions.current[i * 6 + 1] = 0; // Start position y
+            positions.current[i * 6 + 2] = 0; // Start position z
+            positions.current[i * 6 + 3] = 0; // End position x
+            positions.current[i * 6 + 4] = 0; // End position y
+            positions.current[i * 6 + 5] = 0; // End position z
+        }
+        lineGeometryRef.current.setAttribute('position', new THREE.BufferAttribute(positions.current, 3));
+    }, []);
+
+    useFrame(() => {
+        if (!raindropRef.current) return;
+
+        const dummy = new THREE.Object3D();
+        const sphereRadius = 2;
+
+        raindropData.forEach((raindrop, i) => {
+            // Update position
+            raindrop.position.add(raindrop.velocity);
+
+            // Check if the raindrop hits the ground
+            if (raindrop.position.length() <= sphereRadius) {
+                // Reset raindrop position and velocity
+                const randomCloud = clouds[Math.floor(Math.random() * clouds.length)];
+                if (randomCloud) {
+                    const offset = new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.2,
+                        (Math.random() - 0.5) * 0.2,
+                        (Math.random() - 0.5) * 0.2
+                    );
+                    raindrop.position.copy(randomCloud.position.clone().sub(randomCloud.position.clone().multiplyScalar(0.1)).add(offset));
+                    raindrop.velocity.copy(randomCloud.normal.clone().multiplyScalar(-0.02));
+                }
+            }
+
+            // Update line segment positions
+            positions.current[i * 6 + 0] = raindrop.position.x;
+            positions.current[i * 6 + 1] = raindrop.position.y;
+            positions.current[i * 6 + 2] = raindrop.position.z;
+
+            // End position: simulating a small trail behind the raindrop
+            const endPositions = new THREE.Vector3().copy(raindrop.position).add(raindrop.position.clone().multiplyScalar(0.05));
+            positions.current[i * 6 + 3] = endPositions.x;
+            positions.current[i * 6 + 4] = endPositions.y;
+            positions.current[i * 6 + 5] = endPositions.z;
+        });
+
+        lineGeometryRef.current.attributes.position.needsUpdate = true;
+    });
+
     return (
-        <mesh
-            onPointerDown={handlePointerDown}
-            geometry={geometryRef}
-        >
-            {/* <icosahedronGeometry args={[2, 40]}/> */}
-            <shaderMaterial
-                ref={matRef}
-                vertexShader={vertexShader}
-                fragmentShader={fragmentShader}
-                uniforms={uniforms}
-                attach="material"
-            />
-        </mesh>
+        <group>
+            {/* world */}
+            <mesh
+                onPointerDown={handlePointerDown}
+                geometry={geometryRef}
+            >
+                <shaderMaterial
+                    ref={matRef}
+                    vertexShader={vertexShader}
+                    fragmentShader={fragmentShader}
+                    uniforms={uniforms}
+                    attach="material"
+                />
+            </mesh>
+
+            {clouds.map((cloud, index) => (
+                <Cloud
+                    key={`cloud-${index}`}
+                    position={cloud.position}
+                    scale={0.05}
+                    speed={0.2}
+                    rotation={new THREE.Euler().setFromQuaternion(
+                        new THREE.Quaternion().setFromUnitVectors(
+                            new THREE.Vector3(0, 1, 0),
+                            cloud.normal
+                        )
+                    )}
+                />
+            ))}
+
+            {/* Render Raindrops as LineSegments */}
+            <lineSegments ref={raindropRef} geometry={lineGeometryRef.current}>
+                <lineBasicMaterial color="blue" />
+            </lineSegments>
+        </group>
     );
 };
 
