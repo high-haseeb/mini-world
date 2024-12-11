@@ -1,42 +1,18 @@
 'use client';
 
 import { useEffect, useMemo, useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import vertexShader from '@/shaders/world/vert.glsl';
 import fragmentShader from '@/shaders/world/frag.glsl';
 import { useControls } from 'leva';
 
 const World = () => {
-    const ROWS = 10;
-    const COLS = 10;
 
-    // Create a grid texture procedurally
     const canvasRef = useMemo(() => {
         const canvas = document.createElement("canvas");
         canvas.width = 512;
         canvas.height = 512;
-        const ctx = canvas.getContext("2d");
-
-        // ctx.strokeStyle = 'purple';
-        // ctx.lineWidth = 3;
-
-        // for (let r = 0; r <= ROWS; r++) {
-        //     const y = (r * canvas.height) / ROWS;
-        //     ctx.beginPath();
-        //     ctx.moveTo(0, y);
-        //     ctx.lineTo(canvas.width, y);
-        //     ctx.stroke();
-        // }
-        //
-        // for (let c = 0; c <= COLS; c++) {
-        //     const x = (c * canvas.width) / COLS;
-        //     ctx.beginPath();
-        //     ctx.moveTo(x, 0);
-        //     ctx.lineTo(x, canvas.height);
-        //     ctx.stroke();
-        // }
-
         return canvas;
     }, []);
 
@@ -106,8 +82,29 @@ const World = () => {
         return createUVSphereFromCube(1, 64);
     }, []);
 
+    const { scene } = useThree();
+
     const handlePointerDown = (e) => {
         e.stopPropagation();
+        const intersectionPoint = e.point.clone(); // Intersection point on the sphere
+        const normal = intersectionPoint.clone().normalize(); // Normal at the intersection point
+
+        // Create a cube
+        const cube = new THREE.Mesh(
+            new THREE.BoxGeometry(0.2, 0.2, 0.2),
+            new THREE.MeshNormalMaterial()
+        );
+
+        // Position the cube at the intersection point
+        cube.position.copy(intersectionPoint);
+
+        // Align the cube's rotation to the sphere's surface
+        const up = new THREE.Vector3(0, 1, 0); // Default up vector
+        const quaternion = new THREE.Quaternion().setFromUnitVectors(up, normal);
+        cube.quaternion.copy(quaternion);
+
+        // Add the cube to the scene
+        scene.add(cube);
 
         const uv = e.uv;
         if (!uv) return;
