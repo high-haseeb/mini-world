@@ -10,7 +10,6 @@ const Experience = () => {
                 <OrbitControls />
                 <ambientLight />
                 <directionalLight position={[10, 0, 10]} />
-                {/* <Fire /> */}
                 <World />
             </Canvas>
         </div>

@@ -1,15 +1,20 @@
 'use client';
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
-import * as THREE from 'three';
-import vertexShader from '@/shaders/world/vert.glsl';
 import fragmentShader from '@/shaders/world/frag.glsl';
-import { useControls } from 'leva';
+import vertexShader from '@/shaders/world/vert.glsl';
 import { Cloud } from '@react-three/drei';
+import { useFrame, useThree } from '@react-three/fiber';
+import { useControls } from 'leva';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import * as THREE from 'three';
+import Fire from './Fire';
+import useStateStore, { Options } from "@/stores/stateStore";
 
 const NUM_RAINDROPS = 500;
 
 const World = () => {
+
+    const { activeOption, setOption, decrementRain, decrementFire } = useStateStore();
+
     const canvasRef = useMemo(() => {
         const canvas = document.createElement("canvas");
         canvas.width = 512;
@@ -55,7 +60,7 @@ const World = () => {
     });
 
     const createUVSphereFromCube = (size, subdivisions) => {
-        const geometry = new THREE.BoxGeometry(size, size, size, subdivisions, subdivisions, subdivisions);
+        const geometry = new THREE.BoxGeometry(1, 1, 1, subdivisions, subdivisions, subdivisions);
         const positions = geometry.attributes.position;
 
         const uvs = [];
@@ -75,16 +80,16 @@ const World = () => {
         positions.needsUpdate = true;
         geometry.computeVertexNormals();
 
-        geometry.scale(2, 2, 2);
+        geometry.scale(size, size, size);
         return geometry;
     };
 
     const geometryRef = useMemo(() => {
-        return createUVSphereFromCube(1, 64);
+        return createUVSphereFromCube(2, 64);
     }, []);
 
-    const { scene } = useThree();
     const [clouds, setClouds] = useState([]);
+    const [fires, setFires] = useState([]);
 
     const raindropData = useMemo(() => {
         const data = [];
@@ -102,8 +107,19 @@ const World = () => {
         e.stopPropagation();
         const intersectionPoint = e.point.clone();
         const normal = intersectionPoint.clone().normalize();
-        const cloudPosition = intersectionPoint.clone().addScaledVector(normal, 0.5);
-        setClouds((prev) => [...prev, { position: cloudPosition, normal }]);
+        switch (activeOption) {
+            case Options.RAIN:
+                const cloudPosition = intersectionPoint.clone().addScaledVector(normal, 0.5);
+                setClouds((prev) => [...prev, { position: cloudPosition, normal }]);
+                decrementRain();
+                break;
+            case Options.FIRE:
+                const firePosition = intersectionPoint.clone().addScaledVector(normal, 0.1);
+                setFires((prev) => [...prev, { position: firePosition, normal }]);
+                decrementFire();
+                break;
+            default: break;
+        }
 
         const uv = e.uv;
         if (!uv) return;
@@ -140,14 +156,9 @@ const World = () => {
     useFrame(() => {
         if (!raindropRef.current) return;
 
-        const dummy = new THREE.Object3D();
         const sphereRadius = 2;
-
         raindropData.forEach((raindrop, i) => {
-            // Update position
             raindrop.position.add(raindrop.velocity);
-
-            // Check if the raindrop hits the ground
             if (raindrop.position.length() <= sphereRadius) {
                 // Reset raindrop position and velocity
                 const randomCloud = clouds[Math.floor(Math.random() * clouds.length)];
@@ -207,11 +218,22 @@ const World = () => {
                     )}
                 />
             ))}
-
-            {/* Render Raindrops as LineSegments */}
             <lineSegments ref={raindropRef} geometry={lineGeometryRef.current}>
                 <lineBasicMaterial color="blue" />
             </lineSegments>
+
+            {
+                fires.map((fire, index) => (
+                    <Fire
+                        key={index}
+                        position={fire.position}
+                        scale={0.1}
+                        index={index}
+                        rotation={new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), fire.normal))}
+                    />
+                ))
+            }
+
         </group>
     );
 };
