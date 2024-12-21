@@ -2,7 +2,7 @@
 import fragmentShader from '@/shaders/world/frag.glsl';
 import vertexShader from '@/shaders/world/vert.glsl';
 import { Cloud } from '@react-three/drei';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { useControls } from 'leva';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
@@ -13,7 +13,7 @@ const NUM_RAINDROPS = 500;
 
 const World = () => {
 
-    const { activeOption, setOption, decrementRain, decrementFire } = useStateStore();
+    const { activeOption, decrementRain, decrementFire } = useStateStore();
 
     const canvasRef = useMemo(() => {
         const canvas = document.createElement("canvas");
@@ -238,4 +238,4 @@ const World = () => {
     );
 };
 
-export default World;
+export default World

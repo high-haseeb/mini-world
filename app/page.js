@@ -3,7 +3,6 @@ import Experience from "@/components/Experience";
 import useStateStore, { Options } from "@/stores/stateStore";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 
 export default function Home() {
     return (
