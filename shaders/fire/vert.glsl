@@ -91,8 +91,8 @@ void main() {
     v_position = position;
     v_uv = uv;
 
-    vec3 normalTarget = vec3(0.0, 2.0, 0.0);
-    float u_influence = 0.7;
+    vec3 normalTarget = vec3(0.0, 3.0, 0.0);
+    float u_influence = 0.5;
     vec3 toTarget = normalize(normalTarget - position);
     vec3 modifiedNormal = mix(normal, toTarget, u_influence);
     v_normal = normal;

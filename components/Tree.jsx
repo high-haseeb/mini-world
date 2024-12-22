@@ -1,42 +1,20 @@
-import { useRef, useMemo } from "react";
-import { useGLTF } from "@react-three/drei";
+import { useRef } from "react";
 import { Vector3, Color } from "three";
-import { GhibliShader } from "@/shaders/GhilbiShader.js";
-import { useFrame } from "@react-three/fiber";
 import { ToonShader } from "@/shaders/ToonShader";
 
 const Trees = (props) => {
-    // const { nodes } = useGLTF("/trees.glb");
-
-    const uniforms = useMemo(
-        () => ({
-            colorMap: {
-                value: props.colors,
-            },
-            brightnessThresholds: {
-                value: [0.6, 0.35, 0.001],
-            },
-            lightPosition: { value: new Vector3(15, 15, 15) },
-        }),
-        [props.colors]
-    );
 
     const ref = useRef(null);
-    useFrame(() => {
-        if (ref.current) {
-            ref.current.rotation.y += 0.01 * Math.random();
-        }
-    })
-
     const uniformsToon = {
+        uTime: { value: 0.0 },
         uDirLightPos: { value: new Vector3(1, 1, 0) },
-        uDirLightColor: { value: new Color(0xffffff) }, // Bright white directional light
-        uAmbientLightColor: { value: new Color(0x3f5b3b) }, // Warm green for ambient light
-        uBaseColor: { value: new Color(0x52734d) }, // Rich pine green
-        uLineColor1: { value: new Color(0x6e8b5e) }, // Lighter vibrant green
-        uLineColor2: { value: new Color(0x3d5234) }, // Medium dark green for shading
-        uLineColor3: { value: new Color(0x2a3925) }, // Deep forest green
-        uLineColor4: { value: new Color(0x1c2618) }, // Dark outline, almost black-green
+        uDirLightColor: { value: new Color(0xffffff) },
+        uAmbientLightColor: { value: new Color(0x3f5b3b) },
+        uBaseColor: { value: new Color(0x52734d) },
+        uLineColor1: { value: new Color(0x6e8b5e) },
+        uLineColor2: { value: new Color(0x3d5234) },
+        uLineColor3: { value: new Color(0x2a3925) },
+        uLineColor4: { value: new Color(0x1c2618) },
     };
 
     return (
@@ -69,7 +47,5 @@ const Trees = (props) => {
         </group>
     );
 };
-
-// useGLTF.preload("/trees.glb");
 
 export default Trees;
