@@ -1,13 +1,14 @@
 import { Color, Vector3 } from "three";
 
+
 export const GhibliShader = {
   uniforms: {
     colorMap: {
       value: [
-        new Color("#427062"),
-        new Color("#33594E"),
-        new Color("#234549"),
-        new Color("#1E363F"),
+        new Color("#4a8d7e").convertLinearToSRGB(),
+        new Color("#377f6a").convertLinearToSRGB(),
+        new Color("#184f52").convertLinearToSRGB(),
+        new Color("#143b36").convertLinearToSRGB(),
       ],
     },
     brightnessThresholds: {
@@ -16,21 +17,28 @@ export const GhibliShader = {
     lightPosition: { value: new Vector3(15, 15, 15) },
   },
   vertexShader: /* glsl */ `
-    // Set the precision for data types used in this shader
-    precision highp float;
-    precision highp int;
+  varying vec3 vNormal;
+  varying vec3 vPosition;
 
-    // Variables to pass from vertex to fragment shader
-    varying vec3 vNormal;
-    varying vec3 vPosition;
+  // Simple noise function for vertex deformation
+  float noise(vec3 position) {
+    return fract(sin(dot(position, vec3(12.9898, 78.233, 45.164))) * 43758.5453);
+  }
 
-    void main() {
-      vNormal = normal;
-      vPosition = position;
+  void main() {
+    // Add exaggerated noise-based deformation
+    vec3 transformedPosition = position;
+    transformedPosition.x += noise(position * 3.0) * 0.15; // Enhance bark-like texture
+    transformedPosition.z += noise(position * 3.0) * 0.15; // Irregularities
+    transformedPosition.y += noise(position * 2.0) * 0.05; // Subtle variation on height
 
-      gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-    }`,
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(transformedPosition, 1.0);
+    vNormal = normalize(normalMatrix * normal);
+    vPosition = transformedPosition;
+  }
+`,
   fragmentShader: /* glsl */ `
+    #define TOON
     precision highp float;
     precision highp int;
 
