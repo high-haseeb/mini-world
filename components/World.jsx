@@ -7,6 +7,7 @@ import { useControls } from 'leva';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import Fire from './Fire';
+import Tree from "./Tree"
 import useStateStore, { Options } from "@/stores/stateStore";
 
 const NUM_RAINDROPS = 500;
@@ -90,6 +91,7 @@ const World = () => {
 
     const [clouds, setClouds] = useState([]);
     const [fires, setFires] = useState([]);
+    const [trees, setTrees] = useState([]);
 
     const raindropData = useMemo(() => {
         const data = [];
@@ -118,6 +120,11 @@ const World = () => {
                 setFires((prev) => [...prev, { position: firePosition, normal }]);
                 decrementFire();
                 break;
+            case Options.TREE:
+                const treePosition = intersectionPoint.clone().addScaledVector(normal, 0.2);
+                setTrees((prev) => [...prev, { position: treePosition, normal }]);
+                break;
+
             default: break;
         }
 
@@ -221,7 +228,6 @@ const World = () => {
             <lineSegments ref={raindropRef} geometry={lineGeometryRef.current}>
                 <lineBasicMaterial color="blue" />
             </lineSegments>
-
             {
                 fires.map((fire, index) => (
                     <Fire
@@ -230,6 +236,17 @@ const World = () => {
                         scale={0.1}
                         index={index}
                         rotation={new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), fire.normal))}
+                    />
+                ))
+            }
+            {
+                trees.map((tree, index) => (
+                    <Tree
+                        key={index}
+                        position={tree.position}
+                        scale={0.06}
+                        index={index}
+                        rotation={new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), tree.normal))}
                     />
                 ))
             }

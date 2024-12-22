@@ -2,6 +2,7 @@ import { create } from 'zustand'
 
 export const Options = {
     NONE: "none",
+    TREE: "tree",
     FIRE: "fire",
     RAIN: "rain",
 }
@@ -13,6 +14,8 @@ const useStateStore = create((set) => ({
     decrementFire: () => set((state) => ({ fires: state.fires - 1 })),
     rains: 100,
     decrementRain: () => set((state) => ({ rains: state.rains - 1 })),
+    trees: 100,
+    decrementTree:  () => set((state) => ({ trees: state.trees - 1 })),
 }))
 
 

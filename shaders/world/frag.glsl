@@ -1,3 +1,4 @@
+#define TOON
 uniform float uTime;
 uniform float uWaterLevel;
 

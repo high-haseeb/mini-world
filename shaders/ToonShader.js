@@ -1,9 +1,8 @@
-
 import { Color, Vector3 } from "three";
 
 export const ToonShader = {
     uniforms: {
-        uDirLightPos: { value: new Vector3(1, 1, 0) },
+        uDirLightPos: { value: new Vector3(1, 3, 0) },
         uDirLightColor: { value: new Color(0xffffff) },
         uAmbientLightColor: { value: new Color(0x3a2a1b) }, // Warm brown ambient light
         uBaseColor: { value: new Color(0x8a5e3c) }, // Rich, vibrant brown
