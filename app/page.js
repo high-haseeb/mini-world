@@ -3,6 +3,7 @@ import Experience from "@/components/Experience";
 import useStateStore, { Options } from "@/stores/stateStore";
 import Image from "next/image";
 import Link from "next/link";
+import { useState, useEffect } from 'react';
 
 export default function Home() {
     return (
@@ -61,15 +62,52 @@ const OptionsSelector = () => {
     )
 }
 
+const Overlay = () => {
+  const [commitMessage, setCommitMessage] = useState('');
+  const [commitTime, setCommitTime] = useState('');
 
-const Overlay = () => (
+  useEffect(() => {
+    const fetchCommitMessage = async () => {
+      const owner = 'high-haseeb';
+      const repo = 'mini-world';
+      const url = `https://api.github.com/repos/${owner}/${repo}/commits?per_page=1`;
+      
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.length > 0) {
+          setCommitMessage(data[0].commit.message);
+          
+          // Get commit time and format it
+          const commitDate = new Date(data[0].commit.author.date);
+          setCommitTime(commitDate.toLocaleString());
+        }
+      } catch (error) {
+        console.error('Error fetching commit data:', error);
+        setCommitMessage('Error fetching commit message');
+      }
+    };
+
+    fetchCommitMessage();
+  }, []);
+
+  return (
     <>
-        <div className="absolute top-6 left-6 flex flex-col select-none">
-            <span className="font-semibold text-5xl">Mini World</span>
-            <span className="font-extralight"> version: 0.0.3</span>
-        </div>
-        <Link href="https://github.com/high-haseeb/mini-world" className="absolute bottom-6 left-6">
-            <Image src={'/icons/github-mark.svg'} width={16} height={16} alt="github-lin" />
-        </Link>
+      <div className="absolute top-6 left-6 flex flex-col select-none">
+        <span className="font-semibold text-5xl">Mini World</span>
+        <span className="font-extralight"> version: 0.0.3</span>
+        {commitMessage && (
+          <span className="font-light text-sm mt-2">Last Update: {commitMessage}</span>
+        )}
+        {commitTime && (
+          <span className="font-light text-sm mt-1">Committed on: {commitTime}</span>
+        )}
+      </div>
+      <Link href="https://github.com/high-haseeb/mini-world" className="absolute bottom-6 left-6">
+        <Image src={'/icons/github-mark.svg'} width={16} height={16} alt="github-link" />
+      </Link>
     </>
-)
+  );
+};
+

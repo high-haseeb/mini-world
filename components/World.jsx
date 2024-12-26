@@ -1,7 +1,7 @@
 'use client';
 import fragmentShader from '@/shaders/world/frag.glsl';
 import vertexShader from '@/shaders/world/vert.glsl';
-import { Cloud } from '@react-three/drei';
+import { Cloud, useTexture } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { useControls } from 'leva';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -16,78 +16,22 @@ const World = () => {
 
     const { activeOption, decrementRain, decrementFire } = useStateStore();
 
-    const canvasRef = useMemo(() => {
-        const canvas = document.createElement("canvas");
-        canvas.width = 512;
-        canvas.height = 512;
-        return canvas;
-    }, []);
-
-    const textureRef = useMemo(() => {
-        const texture = new THREE.CanvasTexture(canvasRef);
-        texture.wrapS = THREE.ClampToEdgeWrapping;
-        texture.wrapT = THREE.ClampToEdgeWrapping;
-        texture.repeat.set(1, 1);
-        return texture;
-    }, [canvasRef]);
-
     const matRef = useRef();
     const { offset, dispScale } = useControls({ offset: { value: 0.3, step: 0.1 }, dispScale: { value: 0.2, step: 0.1 } });
 
+    const worldMap = useTexture("/map/map_2.svg");
+    worldMap.colorSpace = THREE.SRGBColorSpace;
+    worldMap.wrapS = THREE.RepeatWrapping;
+    worldMap.wrapT = THREE.RepeatWrapping;
+
     const uniforms = useMemo(() => ({
         uTime: { value: 0.0 },
-        GridTexture: { value: textureRef },
-        uDispScale: { value: dispScale },
-        uWaterLevel: { value: 0.0 },
-        uOffset: { value: offset }
-    }), [textureRef]);
-
-    useEffect(() => {
-        textureRef.needsUpdate = true;
-    }, [textureRef]);
-
-    useEffect(() => {
-        matRef.current.uniforms.uOffset.value = offset;
-    }, [offset]);
-
-    useEffect(() => {
-        matRef.current.uniforms.uDispScale.value = dispScale;
-    }, [dispScale]);
+        uWorldMap: { value: worldMap },
+    }), [worldMap]);
 
     useFrame(({ clock }) => {
-        if (matRef.current?.uniforms) {
-            matRef.current.uniforms.uTime.value = clock.getElapsedTime();
-        }
+        if (matRef.current?.uniforms) { matRef.current.uniforms.uTime.value = clock.getElapsedTime(); }
     });
-
-    const createUVSphereFromCube = (size, subdivisions) => {
-        const geometry = new THREE.BoxGeometry(1, 1, 1, subdivisions, subdivisions, subdivisions);
-        const positions = geometry.attributes.position;
-
-        const uvs = [];
-
-        for (let i = 0; i < positions.count; i++) {
-            const vertex = new THREE.Vector3().fromBufferAttribute(positions, i).normalize();
-            positions.setXYZ(i, vertex.x, vertex.y, vertex.z);
-
-            // Convert normalized sphere coordinates to spherical UV
-            const u = 0.5 + Math.atan2(vertex.z, vertex.x) / (2 * Math.PI);
-            const v = 0.5 - Math.asin(vertex.y) / Math.PI;
-
-            uvs.push(u, v);
-        }
-
-        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-        positions.needsUpdate = true;
-        geometry.computeVertexNormals();
-
-        geometry.scale(size, size, size);
-        return geometry;
-    };
-
-    const geometryRef = useMemo(() => {
-        return createUVSphereFromCube(2, 64);
-    }, []);
 
     const [clouds, setClouds] = useState([]);
     const [fires, setFires] = useState([]);
@@ -127,20 +71,6 @@ const World = () => {
 
             default: break;
         }
-
-        const uv = e.uv;
-        if (!uv) return;
-
-        const ctx = canvasRef.getContext("2d");
-        const x = Math.floor(uv.x * canvasRef.width);
-        const y = Math.floor((1 - uv.y) * canvasRef.height);
-
-        ctx.fillStyle = "red";
-        ctx.beginPath();
-        ctx.arc(x, y, 10, 0, Math.PI * 2);
-        ctx.fill();
-
-        textureRef.needsUpdate = true;
     };
 
     const raindropRef = useRef();
@@ -198,10 +128,8 @@ const World = () => {
     return (
         <group>
             {/* world */}
-            <mesh
-                onPointerDown={handlePointerDown}
-                geometry={geometryRef}
-            >
+            <mesh onPointerDown={handlePointerDown} >
+                <sphereGeometry args={[2, 64]}/>
                 <shaderMaterial
                     ref={matRef}
                     vertexShader={vertexShader}
@@ -211,45 +139,45 @@ const World = () => {
                 />
             </mesh>
 
-            {clouds.map((cloud, index) => (
-                <Cloud
-                    key={`cloud-${index}`}
-                    position={cloud.position}
-                    scale={0.05}
-                    speed={0.2}
-                    rotation={new THREE.Euler().setFromQuaternion(
-                        new THREE.Quaternion().setFromUnitVectors(
-                            new THREE.Vector3(0, 1, 0),
-                            cloud.normal
-                        )
-                    )}
-                />
-            ))}
-            <lineSegments ref={raindropRef} geometry={lineGeometryRef.current}>
-                <lineBasicMaterial color="blue" />
-            </lineSegments>
-            {
-                fires.map((fire, index) => (
-                    <Fire
-                        key={index}
-                        position={fire.position}
-                        scale={0.1}
-                        index={index}
-                        rotation={new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), fire.normal))}
-                    />
-                ))
-            }
-            {
-                trees.map((tree, index) => (
-                    <Tree
-                        key={index}
-                        position={tree.position}
-                        scale={0.06}
-                        index={index}
-                        rotation={new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), tree.normal))}
-                    />
-                ))
-            }
+            {/* {clouds.map((cloud, index) => ( */}
+            {/*     <Cloud */}
+            {/*         key={`cloud-${index}`} */}
+            {/*         position={cloud.position} */}
+            {/*         scale={0.05} */}
+            {/*         speed={0.2} */}
+            {/*         rotation={new THREE.Euler().setFromQuaternion( */}
+            {/*             new THREE.Quaternion().setFromUnitVectors( */}
+            {/*                 new THREE.Vector3(0, 1, 0), */}
+            {/*                 cloud.normal */}
+            {/*             ) */}
+            {/*         )} */}
+            {/*     /> */}
+            {/* ))} */}
+            {/* <lineSegments ref={raindropRef} geometry={lineGeometryRef.current}> */}
+            {/*     <lineBasicMaterial color="blue" /> */}
+            {/* </lineSegments> */}
+            {/* { */}
+            {/*     fires.map((fire, index) => ( */}
+            {/*         <Fire */}
+            {/*             key={index} */}
+            {/*             position={fire.position} */}
+            {/*             scale={0.1} */}
+            {/*             index={index} */}
+            {/*             rotation={new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), fire.normal))} */}
+            {/*         /> */}
+            {/*     )) */}
+            {/* } */}
+            {/* { */}
+            {/*     trees.map((tree, index) => ( */}
+            {/*         <Tree */}
+            {/*             key={index} */}
+            {/*             position={tree.position} */}
+            {/*             scale={0.06} */}
+            {/*             index={index} */}
+            {/*             rotation={new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), tree.normal))} */}
+            {/*         /> */}
+            {/*     )) */}
+            {/* } */}
 
         </group>
     );
