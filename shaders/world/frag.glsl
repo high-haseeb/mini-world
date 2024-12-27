@@ -45,5 +45,5 @@ void main()
         edgeY += intensity * kernelY[i];
     }
     float edge = sqrt(edgeX * edgeX + edgeY * edgeY);
-    gl_FragColor = vec4(edge, edge, edge, 1.0);
+    gl_FragColor = vec4(texture2D(uWorldMap, vUv).rgb, 1.0);
 }
