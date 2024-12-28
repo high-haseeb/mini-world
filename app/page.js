@@ -57,7 +57,6 @@ const OptionsSelector = () => {
         <div className="absolute top-1/2 -translate-y-1/2 right-10 flex flex-col gap-4">
             <OptionButton element="fire" option={Options.FIRE} />
             <OptionButton element="rain" option={Options.RAIN} />
-            <OptionButton element="tree" option={Options.TREE} />
         </div>
     )
 }
