@@ -1,7 +1,7 @@
 'use client';
 import fragmentShader from '@/shaders/world/frag.glsl';
 import vertexShader from '@/shaders/world/vert.glsl';
-import { Cloud, useTexture } from '@react-three/drei';
+import { Cloud, Clouds, Instance, Instances, useTexture } from '@react-three/drei';
 import { useFrame, useStore } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
@@ -12,7 +12,7 @@ import useStateStore, { Options } from "@/stores/stateStore";
 const NUM_RAINDROPS = 500;
 
 const World = () => {
-    const { activeOption, decrementRain, decrementFire } = useStateStore();
+    const { activeOption, decrementRain, decrementFire, rains, fires } = useStateStore();
     const matRef = useRef();
 
     const worldMap = useTexture("/map/map_2.svg");
@@ -74,9 +74,14 @@ const World = () => {
         if (matRef.current?.uniforms) { matRef.current.uniforms.uTime.value = clock.getElapsedTime(); }
     });
 
-    const [clouds, setClouds] = useState([]);
-    const [fires, setFires] = useState([]);
-    const [trees, setTrees] = useState([]);
+    useEffect(() => {
+        let initProps = [];
+        for (let i = 0; i < rains; i++) {
+            initProps.push({ position: new THREE.Vector3(), normal: new THREE.Vector3() });
+        }
+        refClouds.current = [...initProps];
+        refFires.current = [...initProps];
+    }, []);
 
     const raindropData = useMemo(() => {
         const data = [];
@@ -104,10 +109,13 @@ const World = () => {
         if (color.r + color.g + color.b == 0) {
             console.warn("please place the fire on land :)")
             isValidPlace = false;
-        } 
+        }
 
-        if(!isValidPlace) {
+        if (!isValidPlace) {
             document.body.style.cursor = "no-drop"
+            setTimeout(() => {
+                document.body.style.cursor = "auto";
+            }, [500]);
             return;
         }
 
@@ -115,18 +123,28 @@ const World = () => {
         const normal = intersectionPoint.clone().normalize();
         switch (activeOption) {
             case Options.RAIN:
-                const cloudPosition = intersectionPoint.clone().addScaledVector(normal, 0.5);
-                setClouds((prev) => [...prev, { position: cloudPosition, normal }]);
-                decrementRain();
+                if (refClouds.current[rains - 1]) {
+                    const cloudPosition = intersectionPoint.clone().addScaledVector(normal, 0.5);
+                    refClouds.current[rains - 1].position.copy(cloudPosition);
+                    refClouds.current[rains - 1].rotation.copy(new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal)));
+                    decrementRain();
+                } else {
+                    console.error("Loading clouds");
+                }
                 break;
             case Options.FIRE:
-                const firePosition = intersectionPoint.clone().addScaledVector(normal, 0.1);
-                setFires((prev) => [...prev, { position: firePosition, normal }]);
-                decrementFire();
+                if (refFires.current[fires - 1]) {
+                    const firePosition = intersectionPoint.clone().addScaledVector(normal, 0.1);
+                    refFires.current[fires - 1].position.copy(firePosition);
+                    refFires.current[fires - 1].rotation.copy(new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal)));
+                    decrementFire();
+                } else {
+                    console.error("Loading fires");
+                }
                 break;
             case Options.TREE:
                 const treePosition = intersectionPoint.clone().addScaledVector(normal, 0.2);
-                setTrees((prev) => [...prev, { position: treePosition, normal }]);
+                // setTrees((prev) => [...prev, { position: treePosition, normal }]);
                 break;
 
             default: break;
@@ -150,10 +168,8 @@ const World = () => {
         }
         lineGeometryRef.current.setAttribute('position', new THREE.BufferAttribute(positions.current, 3));
     }, []);
-
-    useFrame(() => {
+    const updateRainDrops = () => {
         if (!raindropRef.current) return;
-
         const sphereRadius = 2;
         raindropData.forEach((raindrop, i) => {
             raindrop.position.add(raindrop.velocity);
@@ -184,12 +200,50 @@ const World = () => {
         });
 
         lineGeometryRef.current.attributes.position.needsUpdate = true;
+    }
+
+    const refClouds = useRef(new Array(rains));
+    const refFires = useRef(new Array(fires));
+    const refWorld = useRef(null);
+    const refPlane = useRef(null);
+    const [activeElement, setActiveElement] = useState(null);
+
+    useFrame(({ pointer, raycaster, camera }) => {
+        if (activeOption === Options.NONE) {
+            return;
+        }
+        // setActiveElement(fires[0]);
+        if (!refWorld || !activeElement) return;
+        raycaster.setFromCamera(pointer, camera);
+        const intersects = raycaster.intersectObject(refWorld.current);
+
+        if (intersects.length > 0) {
+            // Get the intersection point and update position
+            const intersectionPoint = intersects[0].point;
+            activeElement.position.copy(intersectionPoint);
+
+            const matrix = new THREE.Matrix4();
+            matrix.identity();
+            matrix.setPosition(activeElement.position);
+            refClouds.current.setMatrixAt(0, matrix);
+        } else {
+            const intersectsPlane = raycaster.intersectObject(refPlane.current);
+            if (intersectsPlane.length > 0) {
+                const intersectionPoint = intersectsPlane[0].point;
+                activeElement.position.copy(intersectionPoint);
+
+                const matrix = new THREE.Matrix4();
+                matrix.identity();
+                matrix.setPosition(activeElement.position);
+                refClouds.current.setMatrixAt(0, matrix);
+            }
+        }
     });
 
     return (
         <group>
             {/* world */}
-            <mesh onPointerDown={handlePointerDown} >
+            <mesh onPointerDown={handlePointerDown} ref={refWorld}>
                 <sphereGeometry args={[2, 64]} />
                 <shaderMaterial
                     ref={matRef}
@@ -199,46 +253,62 @@ const World = () => {
                     attach="material"
                 />
             </mesh>
-
-            {clouds.map((cloud, index) => (
+            {/* <mesh rotation={[0, Math.PI, 0]} ref={refPlane}> */}
+            {/*     <planeGeometry args={[100, 100]} /> */}
+            {/*     <meshBasicMaterial transparent opacity={0.0} /> */}
+            {/* </mesh> */}
+            {refClouds.current.map((cloud, index) => (
                 <Cloud
+                    ref={el => refClouds.current[index] = el}
+                    seed={index}
+                    speed={(index * 0.001) + 0.2}
+                    scale={0.05}
                     key={`cloud-${index}`}
                     position={cloud.position}
-                    scale={0.05}
-                    speed={0.2}
-                    rotation={new THREE.Euler().setFromQuaternion(
-                        new THREE.Quaternion().setFromUnitVectors(
-                            new THREE.Vector3(0, 1, 0),
-                            cloud.normal
-                        )
-                    )}
                 />
             ))}
-            <lineSegments ref={raindropRef} geometry={lineGeometryRef.current}>
-                <lineBasicMaterial color="blue" />
-            </lineSegments>
-            {
-                fires.map((fire, index) => (
-                    <Fire
-                        key={index}
-                        position={fire.position}
-                        scale={0.1}
-                        index={index}
-                        rotation={new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), fire.normal))}
-                    />
-                ))
-            }
-            {
-                trees.map((tree, index) => (
-                    <Tree
-                        key={index}
-                        position={tree.position}
-                        scale={0.06}
-                        index={index}
-                        rotation={new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), tree.normal))}
-                    />
-                ))
-            }
+
+            {refFires.current.map((fire, index) => (<Fire ref={el => refFires.current[index] = el} scale={0.1} index={index} {...fire} key={`fire-${index}`} />))}
+            {/**/}
+            {/* {clouds.map((cloud, index) => ( */}
+            {/*     <Cloud */}
+            {/*         key={`cloud-${index}`} */}
+            {/*         position={cloud.position} */}
+            {/*         scale={0.05} */}
+            {/*         speed={0.2} */}
+            {/*         rotation={new THREE.Euler().setFromQuaternion( */}
+            {/*             new THREE.Quaternion().setFromUnitVectors( */}
+            {/*                 new THREE.Vector3(0, 1, 0), */}
+            {/*                 cloud.normal */}
+            {/*             ) */}
+            {/*         )} */}
+            {/*     /> */}
+            {/* ))} */}
+            {/* <lineSegments ref={raindropRef} geometry={lineGeometryRef.current}> */}
+            {/*     <lineBasicMaterial color="blue" /> */}
+            {/* </lineSegments> */}
+            {/* { */}
+            {/*     fires.map((fire, index) => ( */}
+            {/*         <Fire */}
+            {/*             key={index} */}
+            {/*             position={fire.position} */}
+            {/*             scale={0.1} */}
+            {/*             index={index} */}
+            {/*             rotation={new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), fire.normal))} */}
+            {/*         /> */}
+            {/*     )) */}
+            {/* } */}
+            {/* { */}
+            {/*     trees.map((tree, index) => ( */}
+            {/*         <Tree */}
+            {/*             key={index} */}
+            {/*             position={tree.position} */}
+            {/*             scale={0.06} */}
+            {/*             index={index} */}
+            {/*             rotation={new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), tree.normal))} */}
+            {/*         /> */}
+            {/*     )) */}
+            {/* } */}
 
         </group>
     );

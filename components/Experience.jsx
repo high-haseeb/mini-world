@@ -2,10 +2,12 @@
 import { OrbitControls, Stats, StatsGl } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import Trees from './Tree';
-import Fire from './Fire';
 import World from './World';
+import Fire from './Fire';
+import { useRef } from 'react';
 
 const Experience = () => {
+    const test = useRef();
     return (
         <div className="w-full h-full">
             <Canvas className="w-full h-full" camera={{ position: [0, 0, -7] }} shadows >

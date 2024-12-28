@@ -4,29 +4,21 @@ varying vec2 v_uv;
 varying float v_disp;
 varying vec3 v_normal;
 
+uniform float u_time; // Add a uniform for time
+
 void main() {
     // Calculate the view direction
-    vec3 viewDir = normalize(cameraPosition - v_position);
+    float f = v_disp + 1.0 / 2.0;
 
-    // Compute the Fresnel effect using the normal and view direction
-    float fresnel = pow(1.0 - abs(dot(v_normal, viewDir)), 2.5); // Fresnel term emphasizing all edges
+    // Create a color gradient for the fire
+    vec3 col;
+    if (f < 0.5) {
+        col = mix(vec3(1.0, 1.0, 0.0), vec3(1.0, 0.5, 0.0), smoothstep(0.0, 0.5, f));
+    } else {
+        col = mix(vec3(1.0, 0.5, 0.0), vec3(1.0, 0.0, 0.0), smoothstep(0.5, 1.0, f));
+    }
 
-    // Gradient effect for fire
-    float edgeIntensity = pow(fresnel, 0.5); // Control intensity around edges
-    float coreIntensity = smoothstep(0.1, 0.5, fresnel); // Control the transition to the core
-
-    // Define fire colors
-    vec3 outerColor = vec3(1.0, 0.5, 0.0);  // Bright orange (edges)
-    vec3 midColor = vec3(1.0, 0.2, 0.0);    // Vibrant red-orange (middle)
-    vec3 innerColor = vec3(0.4, 0.0, 0.0);  // Deep red (core)
-
-    // Mix colors based on intensity
-    vec3 fireColor = mix(innerColor, midColor, coreIntensity);
-    fireColor = mix(fireColor, outerColor, edgeIntensity);
-
-    // Add glow effect
-    vec3 glow = vec3(1.0, 0.4, 0.1) * fresnel * 0.5;
 
     // Final color output
-    gl_FragColor = vec4(fireColor + glow, 1.0);
+    gl_FragColor = vec4(col, 1.0);
 }

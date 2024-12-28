@@ -95,11 +95,11 @@ void main() {
     float u_influence = 0.5;
     vec3 toTarget = normalize(normalTarget - position);
     vec3 modifiedNormal = mix(normal, toTarget, u_influence);
-    v_normal = normal;
+    v_normal = modifiedNormal;
 
-    float displacement = mix(0.0, cnoise(normal * 2.0 + u_time), position.y + 1.0);
-    vec3 finalPosition = position + modifiedNormal * displacement;
+    float displacement = mix(0.0, cnoise(modifiedNormal * 10.0 + (u_time * 0.5)), position.y + 1.0);
     v_disp = displacement;
+    vec3 finalPosition = position + modifiedNormal * displacement * 1.5;
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(finalPosition, 1.0);
 }
