@@ -164,6 +164,7 @@ const World = () => {
                         speed={(index * 0.001) + 0.2}
                     />
                     <Rain />
+                    <Tree position={[0, -8, 0]}/>
                 </group>
             ))}
 
