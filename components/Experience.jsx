@@ -5,6 +5,7 @@ import Trees from './Tree';
 import World from './World';
 import Fire from './Fire';
 import { useRef } from 'react';
+import Rain from './Rain';
 
 const Experience = () => {
     const test = useRef();
