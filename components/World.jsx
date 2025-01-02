@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import fragmentShader from '@/shaders/world/frag.glsl';
 import vertexShader from '@/shaders/world/vert.glsl';
 import { Cloud, useTexture } from '@react-three/drei';
@@ -9,8 +9,6 @@ import Fire from './Fire';
 import Tree from "./Tree"
 import useStateStore, { Options } from "@/stores/stateStore";
 import Rain from './Rain';
-
-const NUM_RAINDROPS = 500;
 
 const World = () => {
     const { activeOption, decrementRain, decrementFire, rains, fires } = useStateStore();
@@ -84,60 +82,117 @@ const World = () => {
         refFires.current = [...initProps];
     }, []);
 
-    const handlePointerDown = (e) => {
-        e.stopPropagation();
-        if (!e.uv) {
-            console.log("Can not get UV coords at the specified position");
-            return;
+    // const handlePointerDown = (e) => {
+    //     e.stopPropagation();
+    //     if (!e.uv) {
+    //         console.log("Can not get UV coords at the specified position");
+    //         return;
+    //     }
+    //
+    //     let isValidPlace = true;
+    //     const u = e.uv.x;
+    //     const v = e.uv.y;
+    //     const color = getTexelValue(u, v);
+    //     if (color.r + color.g + color.b == 0) {
+    //         console.warn("please place the fire on land :)")
+    //         isValidPlace = false;
+    //     }
+    //
+    //     if (!isValidPlace) {
+    //         document.body.style.cursor = "no-drop"
+    //         setTimeout(() => document.body.style.cursor = "auto", [500]);
+    //         return;
+    //     }
+    //
+    //     const intersectionPoint = e.point.clone();
+    //     const normal = intersectionPoint.clone().normalize();
+    //     switch (activeOption) {
+    //         case Options.RAIN:
+    //             if (refClouds.current[rains - 1]) {
+    //                 const cloudPosition = intersectionPoint.clone().addScaledVector(normal, 0.5);
+    //                 refClouds.current[rains - 1].position.copy(cloudPosition);
+    //                 refClouds.current[rains - 1].rotation.copy(new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal)));
+    //                 decrementRain();
+    //             } else {
+    //                 console.error("Loading clouds");
+    //             }
+    //             break;
+    //         case Options.FIRE:
+    //             if (refFires.current[fires - 1]) {
+    //                 const firePosition = intersectionPoint.clone().addScaledVector(normal, 0.1);
+    //                 refFires.current[fires - 1].position.copy(firePosition);
+    //                 refFires.current[fires - 1].rotation.copy(new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal)));
+    //                 decrementFire();
+    //             } else {
+    //                 console.error("Loading fires");
+    //             }
+    //             break;
+    //         case Options.TREE:
+    //         default: break;
+    //     }
+    //
+    // };
+
+    useEffect(() => {
+
+        const handlePointerDown = () => {
+            setIsPointerDown(true);
         }
 
-        let isValidPlace = true;
-        const u = e.uv.x;
-        const v = e.uv.y;
-        const color = getTexelValue(u, v);
-        if (color.r + color.g + color.b == 0) {
-            console.warn("please place the fire on land :)")
-            isValidPlace = false;
+        const handlePointerUp = () => {
+            setIsPointerDown(false);
+            meshRef.current = null;
         }
 
-        if (!isValidPlace) {
-            document.body.style.cursor = "no-drop"
-            setTimeout(() => document.body.style.cursor = "auto", [500]);
-            return;
+        window.addEventListener("mousedown", handlePointerDown);
+        window.addEventListener("mouseup", handlePointerUp);
+        return () => {
+            window.removeEventListener("mousedown", handlePointerDown);
+            window.removeEventListener("mouseup", handlePointerUp);
         }
+    }, []);
 
-        const intersectionPoint = e.point.clone();
-        const normal = intersectionPoint.clone().normalize();
+    useEffect(() => {
         switch (activeOption) {
             case Options.RAIN:
                 if (refClouds.current[rains - 1]) {
-                    const cloudPosition = intersectionPoint.clone().addScaledVector(normal, 0.5);
-                    refClouds.current[rains - 1].position.copy(cloudPosition);
-                    refClouds.current[rains - 1].rotation.copy(new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal)));
+                    meshRef.current = refClouds.current[rains - 1];
                     decrementRain();
-                } else {
-                    console.error("Loading clouds");
                 }
                 break;
             case Options.FIRE:
                 if (refFires.current[fires - 1]) {
-                    const firePosition = intersectionPoint.clone().addScaledVector(normal, 0.1);
-                    refFires.current[fires - 1].position.copy(firePosition);
-                    refFires.current[fires - 1].rotation.copy(new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal)));
+                    meshRef.current = refFires.current[fires - 1];
                     decrementFire();
-                } else {
-                    console.error("Loading fires");
                 }
                 break;
             case Options.TREE:
-                const treePosition = intersectionPoint.clone().addScaledVector(normal, 0.2);
-                // setTrees((prev) => [...prev, { position: treePosition, normal }]);
-                break;
-
             default: break;
         }
+    }, [activeOption]);
 
-    };
+    const meshRef = useRef(null);
+    const planeRef = useRef(null);
+    const [isPointerDown, setIsPointerDown] = useState(false);
+
+    let interactions;
+
+    useFrame(({ pointer, raycaster, camera }) => {
+        planeRef.current.lookAt(camera.position);
+        if (!meshRef.current || !isPointerDown) return;
+        raycaster.setFromCamera(pointer, camera);
+
+        interactions = raycaster.intersectObject(planeRef.current);
+        if (interactions.length > 0) {
+            meshRef.current.position.copy(interactions[0].point);
+        }
+
+        interactions = raycaster.intersectObject(refWorld.current);
+        if (interactions.length > 0) {
+            meshRef.current.rotation.copy(new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), interactions[0].normal)));
+            meshRef.current.position.copy(interactions[0].point);
+        }
+    })
 
     const refClouds = useRef(new Array(rains));
     const refFires = useRef(new Array(fires));
@@ -146,7 +201,11 @@ const World = () => {
     return (
         <group>
             {/* world */}
-            <mesh onPointerDown={handlePointerDown} ref={refWorld}>
+            <mesh ref={refWorld}>
+                <sphereGeometry args={[2.5, 64]} />
+                <meshBasicMaterial transparent opacity={0.01} />
+            </mesh>
+            <mesh /*onPointerDown={handlePointerDown}*/ >
                 <sphereGeometry args={[2, 64]} />
                 <shaderMaterial
                     ref={matRef}
@@ -157,14 +216,19 @@ const World = () => {
                 />
             </mesh>
 
+            <mesh rotation={[0, Math.PI, 0]} ref={planeRef}>
+                <planeGeometry args={[100, 100, 1, 1]} />
+                <meshBasicMaterial color={"lime"} transparent opacity={0.1} />
+            </mesh>
+
             {refClouds.current.map((cloud, index) => (
-                <group ref={el => refClouds.current[index] = el} position={cloud.position} key={`rain-${index}`}  scale={0.05}>
+                <group ref={el => refClouds.current[index] = el} position={cloud.position} key={`rain-${index}`} scale={0.05}>
                     <Cloud
                         seed={index}
                         speed={(index * 0.001) + 0.2}
                     />
                     <Rain />
-                    <Tree position={[0, -8, 0]}/>
+                    <Tree position={[0, -8, 0]} />
                 </group>
             ))}
 

@@ -15,7 +15,9 @@ const useStateStore = create((set) => ({
     rains: 100,
     decrementRain: () => set((state) => ({ rains: state.rains - 1 })),
     trees: 100,
-    decrementTree:  () => set((state) => ({ trees: state.trees - 1 })),
+    decrementTree: () => set((state) => ({ trees: state.trees - 1 })),
+    oribtLock: false,
+    setOrbitLock: (orbitLock) => set(() => ({ orbitLock })),
 }))
 
 

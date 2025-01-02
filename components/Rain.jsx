@@ -1,8 +1,7 @@
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { extend, useFrame } from '@react-three/fiber';
 
-// Extend to make custom material usable in R3F
 extend({ LineBasicMaterial: THREE.LineBasicMaterial });
 
 const Rain = () => {
@@ -10,7 +9,6 @@ const Rain = () => {
     const noiseRef = useRef();
     const gCount = 500;
 
-    // Create required uniforms
     const globalUniforms = {
         time: { value: 0 },
         noise: { value: null },
@@ -69,7 +67,6 @@ const Rain = () => {
         const rtPlane = new THREE.Mesh(rtGeo, rtMat);
         rtScene.add(rtPlane);
 
-        // Assign noise texture to global uniforms
         globalUniforms.noise.value = renderTarget.texture;
         noiseRef.current = { renderTarget, rtScene, rtCamera };
     }, [gCount]);
@@ -78,7 +75,6 @@ const Rain = () => {
         globalUniforms.time.value = clock.getElapsedTime();
 
         if (shaderRef.current) {
-            // rainRef.current.material.uniforms.time.value = clock.getElapsedTime();
             shaderRef.current.uniforms.time = { value: clock.getElapsedTime() };
         }
         // Render the noise texture
@@ -94,6 +90,7 @@ const Rain = () => {
     return (
         <lineSegments ref={rainRef} position={[0, -13, 0]}>
             <lineBasicMaterial
+                transparent
                 onBeforeCompile={(shader) => {
                     shaderRef.current = shader;
                     shader.uniforms.time = { value: 0 };
