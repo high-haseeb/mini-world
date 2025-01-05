@@ -9,12 +9,14 @@ import Fire from './Fire';
 import Tree from "./Tree"
 import useStateStore, { Options } from "@/stores/stateStore";
 import Rain from './Rain';
+import { useControls } from 'leva';
 
 const World = () => {
     const { activeOption, decrementRain, decrementFire, rains, fires } = useStateStore();
     const matRef = useRef();
+    const {delta} = useControls({delta: {value: 0.01, min: 0.0, max: 1.0, step: 0.01}});
 
-    const worldMap = useTexture("/map/map_2.svg");
+    const worldMap = useTexture("/map/WorldMap.svg");
     worldMap.colorSpace = THREE.SRGBColorSpace;
     worldMap.wrapS = THREE.RepeatWrapping;
     worldMap.wrapT = THREE.RepeatWrapping;
@@ -67,10 +69,14 @@ const World = () => {
     const uniforms = useMemo(() => ({
         uTime: { value: 0.0 },
         uWorldMap: { value: worldMap },
+        delta: { value: delta },
     }), [worldMap]);
 
     useFrame(({ clock }) => {
-        if (matRef.current?.uniforms) { matRef.current.uniforms.uTime.value = clock.getElapsedTime(); }
+        if (matRef.current?.uniforms) {
+            matRef.current.uniforms.uTime.value = clock.getElapsedTime(); 
+            matRef.current.uniforms.delta.value = delta;
+        }
     });
 
     useEffect(() => {
@@ -133,66 +139,6 @@ const World = () => {
     //
     // };
 
-    useEffect(() => {
-
-        const handlePointerDown = () => {
-            setIsPointerDown(true);
-        }
-
-        const handlePointerUp = () => {
-            setIsPointerDown(false);
-            meshRef.current = null;
-        }
-
-        window.addEventListener("mousedown", handlePointerDown);
-        window.addEventListener("mouseup", handlePointerUp);
-        return () => {
-            window.removeEventListener("mousedown", handlePointerDown);
-            window.removeEventListener("mouseup", handlePointerUp);
-        }
-    }, []);
-
-    useEffect(() => {
-        switch (activeOption) {
-            case Options.RAIN:
-                if (refClouds.current[rains - 1]) {
-                    meshRef.current = refClouds.current[rains - 1];
-                    decrementRain();
-                }
-                break;
-            case Options.FIRE:
-                if (refFires.current[fires - 1]) {
-                    meshRef.current = refFires.current[fires - 1];
-                    decrementFire();
-                }
-                break;
-            case Options.TREE:
-            default: break;
-        }
-    }, [activeOption]);
-
-    const meshRef = useRef(null);
-    const planeRef = useRef(null);
-    const [isPointerDown, setIsPointerDown] = useState(false);
-
-    let interactions;
-
-    useFrame(({ pointer, raycaster, camera }) => {
-        planeRef.current.lookAt(camera.position);
-        if (!meshRef.current || !isPointerDown) return;
-        raycaster.setFromCamera(pointer, camera);
-
-        interactions = raycaster.intersectObject(planeRef.current);
-        if (interactions.length > 0) {
-            meshRef.current.position.copy(interactions[0].point);
-        }
-
-        interactions = raycaster.intersectObject(refWorld.current);
-        if (interactions.length > 0) {
-            meshRef.current.rotation.copy(new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), interactions[0].normal)));
-            meshRef.current.position.copy(interactions[0].point);
-        }
-    })
 
     const refClouds = useRef(new Array(rains));
     const refFires = useRef(new Array(fires));
@@ -201,12 +147,8 @@ const World = () => {
     return (
         <group>
             {/* world */}
-            <mesh ref={refWorld}>
-                <sphereGeometry args={[2.5, 64]} />
-                <meshBasicMaterial transparent opacity={0.01} />
-            </mesh>
-            <mesh /*onPointerDown={handlePointerDown}*/ >
-                <sphereGeometry args={[2, 64]} />
+            <mesh /*onPointerDown={handlePointerDown}*/ ref={refWorld} >
+                <sphereGeometry args={[2, 512]} />
                 <shaderMaterial
                     ref={matRef}
                     vertexShader={vertexShader}
@@ -214,11 +156,6 @@ const World = () => {
                     uniforms={uniforms}
                     attach="material"
                 />
-            </mesh>
-
-            <mesh rotation={[0, Math.PI, 0]} ref={planeRef}>
-                <planeGeometry args={[100, 100, 1, 1]} />
-                <meshBasicMaterial color={"lime"} transparent opacity={0.1} />
             </mesh>
 
             {refClouds.current.map((cloud, index) => (
