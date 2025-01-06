@@ -14,7 +14,7 @@ import { useControls } from 'leva';
 const World = () => {
     const { activeOption, decrementRain, decrementFire, rains, fires } = useStateStore();
     const matRef = useRef();
-    const {delta} = useControls({delta: {value: 0.01, min: 0.0, max: 1.0, step: 0.01}});
+    const {delta} = useControls({delta: {value: 0.1, min: 0.0, max: 1.0, step: 0.01}});
 
     const worldMap = useTexture("/map/WorldMap.svg");
     worldMap.colorSpace = THREE.SRGBColorSpace;
@@ -148,7 +148,7 @@ const World = () => {
         <group>
             {/* world */}
             <mesh /*onPointerDown={handlePointerDown}*/ ref={refWorld} >
-                <sphereGeometry args={[2, 512]} />
+                <sphereGeometry args={[2, 512, 512]} />
                 <shaderMaterial
                     ref={matRef}
                     vertexShader={vertexShader}
