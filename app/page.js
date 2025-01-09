@@ -20,7 +20,7 @@ const Stats = () => {
     const { fires, rains } = useStateStore();
 
     return (
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col">
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col select-none">
             <div className="flex items-center justify-center gap-2">
                 <span className="text-base lg:text-2xl font-semibold capitalize">fires</span>
                 <span className="text-base lg:text-2xl font-semibold capitalize">{fires}/100</span>
@@ -54,7 +54,7 @@ const OptionsSelector = () => {
     )
 
     return (
-        <div className="absolute top-1/2 -translate-y-1/2 right-10 flex flex-col gap-4">
+        <div className="absolute top-1/2 -translate-y-1/2 right-10 flex flex-col gap-4 select-none">
             <OptionButton element="fire" option={Options.FIRE} />
             <OptionButton element="rain" option={Options.RAIN} />
         </div>

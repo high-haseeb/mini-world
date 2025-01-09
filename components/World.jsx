@@ -8,11 +8,13 @@ import * as THREE from 'three';
 import Fire from './Fire';
 import Tree from "./Tree"
 import Rain from './Rain';
-import { useControls } from 'leva';
-import { Options } from '@/stores/stateStore';
+import { Options, useTreesStore } from '@/stores/stateStore';
+import Trees from './Trees';
 
 const World = () => {
+    const { addTree } = useTreesStore();
     console.log("rendering the world component");
+
     const activeOption = Options.RAIN;
     const rains = useRef(100);
     const animatedClouds = useRef([]);
@@ -29,13 +31,11 @@ const World = () => {
             initProps.push({ position: new THREE.Vector3(), normal: new THREE.Vector3(), opacity: 1.0 });
             cloudElementsRefA.current.push(1.0);
         }
-        console.log(cloudElementsRefA.current)
         setCloudPropsA([...initProps]);
         refFires.current = [...initProps];
     }, []);
 
     const matRef = useRef();
-    const { delta } = useControls({ delta: { value: 0.1, min: 0.0, max: 1.0, step: 0.01 } });
 
     const worldMap = useTexture("/map/WorldMap.svg");
     worldMap.colorSpace = THREE.SRGBColorSpace;
@@ -63,6 +63,61 @@ const World = () => {
         setWorldMapImageData(imageData);
     }, [worldMap])
 
+    const [elementsMap, setElementsMap] = useState(null);
+    useEffect(() => {
+        if (elementsMap) return;
+        const eCanvas = document.createElement("canvas");
+        eCanvas.width = worldMap.image.width;
+        eCanvas.height = worldMap.image.height;
+        const ctx = eCanvas.getContext("2d");
+        // ctx.clearRect(0, 0, eCanvas.width, eCanvas.height);
+        ctx.fillStyle = "#181818";
+        ctx.fillRect(0, 0, eCanvas.width, eCanvas.height);
+        setElementsMap(eCanvas);
+
+        eCanvas.style.position = "fixed";
+        eCanvas.style.top = "10rem";
+        eCanvas.style.left = "4rem";
+        eCanvas.style.width = "20rem";
+        eCanvas.style.height = "auto";
+        document.body.appendChild(eCanvas);
+    }, [worldMap]);
+
+    /**
+    * Draws a circle representing an element on the map.
+    * The RGBA channels encode the following:
+    * Red   - Fires
+    * Blue  - Rains
+    * Green - Trees
+    *
+    * @param {Object} position - The position of the element on the map.
+    * @param {number} position.x - The x-coordinate in normalized (0 to 1) space.
+    * @param {number} position.y - The y-coordinate in normalized (0 to 1) space.
+    * @param {string} elementColor - The CSS color string used to draw the element.
+    */
+    const putElementonMap = (position, elementColor) => {
+        if (!elementsMap) return;
+        const radius = 100.0;
+        const ctx = elementsMap.getContext("2d");
+
+        let u = (position.x % 1 + 1) % 1;
+        let v = (position.y % 1 + 1) % 1;
+
+        const x = Math.floor(u * elementsMap.width);
+        const y = Math.floor((1 - v) * elementsMap.height);
+        ctx.beginPath();
+        ctx.fillStyle = elementColor;
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    /**
+     * Returns the texel value for the given UV coordinate And 
+     * @param {number} u - the U coordinate; 
+     * @param {number} v - the V coordinate; 
+     * @returns {{ r: number, g: number, b: number }} - the color at the given UV coordinate.
+     * @throws {Error} - if the `worldMapImageData` is not loaded.
+     */
     const getTexelValue = (u, v) => {
         if (!worldMapImageData) {
             console.error("The World Map Texture is not loaded yet. Please wait for it to be loaded");
@@ -82,7 +137,6 @@ const World = () => {
         const r = worldMapImageData.data[index];
         const g = worldMapImageData.data[index + 1];
         const b = worldMapImageData.data[index + 2];
-        // const a = imageData.data[index + 3];
 
         return { r, g, b };
     };
@@ -90,17 +144,16 @@ const World = () => {
     const uniforms = useMemo(() => ({
         uTime: { value: 0.0 },
         uWorldMap: { value: worldMap },
-        delta: { value: delta },
     }), [worldMap]);
 
     useFrame(({ clock }) => {
         if (matRef.current?.uniforms) {
             matRef.current.uniforms.uTime.value = clock.getElapsedTime();
-            matRef.current.uniforms.delta.value = delta;
         }
+
+        // animate the clouds
         animatedClouds.current.forEach((cloud) => {
             if (cloudGroupRefA.current[cloud.index].scale.x < 0.05 && cloud.growing) {
-                console.log("growing")
                 cloudGroupRefA.current[cloud.index].scale.addScalar(0.001);
                 if (cloudGroupRefA.current[cloud.index].scale.x >= 0.05) {
                     setTimeout(() => cloud.growing = false, [1000]);
@@ -115,18 +168,13 @@ const World = () => {
 
 
     const handlePointerDown = (e) => {
-        console.log("Pointer up")
         e.stopPropagation();
-        if (!e.uv) {
-            console.log("Can not get UV coords at the specified position");
-            return;
-        }
 
         let isValidPlace = true;
         const u = e.uv.x;
         const v = e.uv.y;
         const color = getTexelValue(u, v);
-        if (color.r + color.g + color.b == 0) {
+        if (color.g == 0) {
             console.warn("please place the fire on land :)")
             isValidPlace = false;
         }
@@ -146,22 +194,22 @@ const World = () => {
                     const cloudPosition = intersectionPoint.clone().addScaledVector(normal, 0.5);
                     const index = rains.current - 1;
                     cloudGroupRefA.current[index].position.copy(cloudPosition);
-                    cloudGroupRefA.current[index].rotation.copy(new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal)));
+                    const rotation = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal))
+                    cloudGroupRefA.current[index].rotation.copy(rotation);
                     animatedClouds.current.push({ index: index, growing: true });
                     rains.current = index;
+                    putElementonMap(e.uv, "blue");
+                    addTree(cloudPosition.clone().addScaledVector(normal, -0.4), rotation);
                 } break;
 
             case Options.FIRE:
-                if (refFires.current[fires - 1]) {
+                {
                     const firePosition = intersectionPoint.clone().addScaledVector(normal, 0.2);
                     refFires.current[fires - 1].position.copy(firePosition);
                     refFires.current[fires - 1].rotation.copy(new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal)));
                     decrementFire();
-                } else {
-                    console.error("Loading fires");
-                }
-                break;
-            case Options.TREE:
+                    putElementonMap(e.uv, "red");
+                } break;
             default: break;
         }
 
@@ -184,21 +232,24 @@ const World = () => {
                 />
             </mesh>
 
-            {cloudPropsA.map((cloud, index) => {
-                console.log("rerendering rain");
-                return (
-                    <group ref={el => cloudGroupRefA.current[index] = el} position={cloud.position} key={`rain-${index}`} /* scale={0.05} */ scale={[0.0, 0.0, 0.0]} >
-                        <Cloud
-                            seed={index}
-                            speed={(index * 0.001) + 0.2}
-                        />
-                        <Rain />
-                        {/* <Tree position={[0, -8, 0]} /> */}
-                    </group>
-                )
-            })}
+            {cloudPropsA.map((cloud, index) => (
+                <group
+                    ref={el => cloudGroupRefA.current[index] = el}
+                    position={cloud.position} key={`rain-${index}`}
+                    scale={[0.0, 0.0, 0.0]}
+                >
+                    <Cloud
+                        seed={index}
+                        speed={(index * 0.001) + 0.2}
+                    />
+                    <Rain />
+                </group>)
+            )}
+            <Trees />
 
-            {refFires.current.map((fire, index) => (<Fire ref={el => refFires.current[index] = el} scale={0.1} index={index} {...fire} key={`fire-${index}`} />))}
+            {/* {refFires.current.map((fire, index) => ( */}
+            {/*     <Fire ref={el => refFires.current[index] = el} scale={0.1} index={index} {...fire} key={`fire-${index}`} /> */}
+            {/* ))} */}
 
         </group>
     );

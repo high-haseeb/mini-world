@@ -18,7 +18,26 @@ const useStateStore = create((set) => ({
     decrementTree: () => set((state) => ({ trees: state.trees - 1 })),
     oribtLock: false,
     setOrbitLock: (orbitLock) => set(() => ({ orbitLock })),
-}))
+}));
+
+export const useTreesStore = create((set) => ({
+    numTrees: 0,
+    addTree: (position, rotation) =>
+        set((state) => ({
+            numTrees: state.numTrees + 1,
+            treesState: [...state.treesState, { position, rotation }],
+        })),
+    removeTree: (index) =>
+        set((state) => {
+            const updatedTreesState = [...state.treesState];
+            updatedTreesState.splice(index, 1);
+            return {
+                numTrees: state.numTrees - 1,
+                treesState: updatedTreesState,
+            };
+        }),
+    treesState: [],
+}));
 
 
 export default useStateStore;
