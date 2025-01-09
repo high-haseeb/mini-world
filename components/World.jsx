@@ -6,20 +6,16 @@ import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import Fire from './Fire';
-import Tree from "./Tree"
 import Rain from './Rain';
-import { Options, useTreesStore } from '@/stores/stateStore';
+import useStateStore, { Options, useTreesStore } from '@/stores/stateStore';
 import Trees from './Trees';
 
 const World = () => {
     const { addTree } = useTreesStore();
+    const { fires, rains, decrementFire, decrementRain, activeOption} = useStateStore();
     console.log("rendering the world component");
 
-    const activeOption = Options.RAIN;
-    const rains = useRef(100);
     const animatedClouds = useRef([]);
-
-    let fires = 100;
 
     const cloudGroupRefA = useRef([]);
     const cloudElementsRefA = useRef([]);
@@ -192,19 +188,19 @@ const World = () => {
             case Options.RAIN:
                 {
                     const cloudPosition = intersectionPoint.clone().addScaledVector(normal, 0.5);
-                    const index = rains.current - 1;
+                    const index = rains - 1;
                     cloudGroupRefA.current[index].position.copy(cloudPosition);
                     const rotation = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal))
                     cloudGroupRefA.current[index].rotation.copy(rotation);
                     animatedClouds.current.push({ index: index, growing: true });
-                    rains.current = index;
                     putElementonMap(e.uv, "blue");
                     addTree(cloudPosition.clone().addScaledVector(normal, -0.4), rotation);
+                    decrementRain();
                 } break;
 
             case Options.FIRE:
                 {
-                    const firePosition = intersectionPoint.clone().addScaledVector(normal, 0.2);
+                    const firePosition = intersectionPoint.clone().addScaledVector(normal, 0.1);
                     refFires.current[fires - 1].position.copy(firePosition);
                     refFires.current[fires - 1].rotation.copy(new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal)));
                     decrementFire();
@@ -247,9 +243,9 @@ const World = () => {
             )}
             <Trees />
 
-            {/* {refFires.current.map((fire, index) => ( */}
-            {/*     <Fire ref={el => refFires.current[index] = el} scale={0.1} index={index} {...fire} key={`fire-${index}`} /> */}
-            {/* ))} */}
+            {refFires.current.map((fire, index) => (
+                <Fire ref={el => refFires.current[index] = el} scale={0.1} index={index} {...fire} key={`fire-${index}`} />
+            ))}
 
         </group>
     );
