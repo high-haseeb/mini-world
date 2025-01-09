@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Vector3, Color } from "three";
 import { ToonShader } from "@/shaders/ToonShader";
@@ -19,21 +19,27 @@ const Trees = (props) => {
     uLineColor4: { value: new Color(0x1c2618) },
   };
 
+  const growthRef = useRef(0.0);
+
   useFrame(({ clock }) => {
+    // if (growthRef.current <= 1.0) growthRef.current += 0.01;
+
     if (!startTime.current) startTime.current = clock.getElapsedTime();
-    const elapsedTime = clock.getElapsedTime() - startTime.current;
-    const progress = Math.min(elapsedTime / 3, 1); // Clamp progress to [0, 1]
+    const elapsedTime = clock.getElapsedTime() - startTime.current * 0.1;
+    const progress = Math.min(elapsedTime / 3, 1);
 
     if (ref.current) {
       ref.current.children.forEach((child, index) => {
-        const scaleProgress = Math.max(0, Math.min((progress - index * 0.015), 1));
-        child.scale.set(1, scaleProgress, 1);
+        if (child.type == "Mesh") {
+          const scaleProgress = Math.max(0, Math.min((progress - index * 0.015), 1));
+          child.scale.set(scaleProgress, scaleProgress, scaleProgress);
+        }
       });
     }
   });
 
   return (
-    <group {...props} ref={ref} dispose={null}>
+    <group {...props} ref={ref} dispose={null} >
       <mesh castShadow receiveShadow position={[0, 0, 0]} scale={0}>
         <coneGeometry args={[1.2, 1.5, 10]} />
         <shaderMaterial attach="material" {...ToonShader} uniforms={uniformsToon} />
