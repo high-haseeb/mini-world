@@ -9,10 +9,11 @@ import Fire from './Fire';
 import Rain from './Rain';
 import useStateStore, { Options, useTreesStore } from '@/stores/stateStore';
 import Trees from './Trees';
+import { createCubeSphere } from './utils';
 
 const World = () => {
     const { addTree } = useTreesStore();
-    const { fires, rains, decrementFire, decrementRain, activeOption} = useStateStore();
+    const { fires, rains, decrementFire, decrementRain, activeOption } = useStateStore();
     console.log("rendering the world component");
 
     const animatedClouds = useRef([]);
@@ -35,8 +36,13 @@ const World = () => {
 
     const worldMap = useTexture("/map/WorldMap.svg");
     worldMap.colorSpace = THREE.SRGBColorSpace;
-    worldMap.wrapS = THREE.RepeatWrapping;
-    worldMap.wrapT = THREE.RepeatWrapping;
+    const sdfMap = useTexture("/map/sdf.png");
+    sdfMap.colorSpace = THREE.SRGBColorSpace;
+    sdfMap.wrapS = THREE.ClampToEdgeWrapping
+    sdfMap.wrapT = THREE.ClampToEdgeWrapping
+
+    const waterSDFMap = useTexture("/map/waterSDF.png");
+    waterSDFMap.colorSpace = THREE.SRGBColorSpace;
 
     const [worldMapImageData, setWorldMapImageData] = useState(null);
     const [debugCanvas, setDebugCanvas] = useState(null);
@@ -140,6 +146,8 @@ const World = () => {
     const uniforms = useMemo(() => ({
         uTime: { value: 0.0 },
         uWorldMap: { value: worldMap },
+        uSDF: { value: sdfMap },
+        uWSDF: { value: waterSDFMap },
     }), [worldMap]);
 
     useFrame(({ clock }) => {
@@ -217,8 +225,8 @@ const World = () => {
     return (
         <group>
             {/* world */}
-            <mesh onPointerDown={handlePointerDown} ref={refWorld} >
-                <sphereGeometry args={[2, 256, 256]} />
+            <mesh onPointerDown={handlePointerDown} ref={refWorld} /* geometry={createCubeSphere()} */ >
+                <sphereGeometry args={[2, 512, 512]} />
                 <shaderMaterial
                     ref={matRef}
                     vertexShader={vertexShader}
@@ -241,11 +249,11 @@ const World = () => {
                     <Rain />
                 </group>)
             )}
-            <Trees />
+            {/* <Trees /> */}
 
-            {refFires.current.map((fire, index) => (
-                <Fire ref={el => refFires.current[index] = el} scale={0.1} index={index} {...fire} key={`fire-${index}`} />
-            ))}
+            {/* {refFires.current.map((fire, index) => ( */}
+            {/* <Fire ref={el => refFires.current[index] = el} scale={0.1} index={index} {...fire} key={`fire-${index}`} /> */}
+            {/* ))} */}
 
         </group>
     );

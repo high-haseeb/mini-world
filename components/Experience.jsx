@@ -2,7 +2,6 @@
 import { OrbitControls, Stats } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import World from './World';
-import useStateStore from '@/stores/stateStore';
 
 const Experience = () => {
     return (

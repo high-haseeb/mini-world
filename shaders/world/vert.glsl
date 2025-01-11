@@ -1,22 +1,15 @@
-uniform float uTime;
-uniform sampler2D uWorldMap;
-uniform float delta;
+uniform sampler2D uSDF;
 
-varying vec3 vPosition;
-varying vec3 vNormal;
-varying float vDisp;
-varying vec2 vUv;
 varying float height;
+varying vec2 vUv;
 
 void main()
 {
-    vPosition = position;
-    vNormal = normal;
     vUv = uv;
-
-    vec3 texel = texture2D(uWorldMap, uv).rgb;
-    height = mix(0.0, 1.0, texel.g);// + mix(0.0, -0.4, texel.b);
-    vec3 finalPosition = mix(position, position + normal * delta, height);;
-
+    float delta = 0.2; // the scale of displacement based on the sdf
+    vec3 texel = texture2D(uSDF, uv).rgb;
+    height = smoothstep(0.0, 1.0, texel.r + texel.g + texel.b);
+    float poleFactor = smoothstep(0.0, 0.0, uv.y); // Gradually reduce displacement near poles
+    vec3 finalPosition = mix(position, position + normal * delta * poleFactor, height);
     gl_Position = projectionMatrix * modelViewMatrix * vec4(finalPosition, 1.0);
 }
