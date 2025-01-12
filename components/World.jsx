@@ -155,19 +155,6 @@ const World = () => {
             matRef.current.uniforms.uTime.value = clock.getElapsedTime();
         }
 
-        // animate the clouds
-        animatedClouds.current.forEach((cloud) => {
-            if (cloudGroupRefA.current[cloud.index].scale.x < 0.05 && cloud.growing) {
-                cloudGroupRefA.current[cloud.index].scale.addScalar(0.001);
-                if (cloudGroupRefA.current[cloud.index].scale.x >= 0.05) {
-                    setTimeout(() => cloud.growing = false, [1000]);
-                }
-            }
-
-            if (cloudGroupRefA.current[cloud.index].scale.x > 0.0 && !cloud.growing) {
-                cloudGroupRefA.current[cloud.index].scale.subScalar(0.001);
-            }
-        });
     });
 
 
@@ -202,13 +189,13 @@ const World = () => {
                     cloudGroupRefA.current[index].rotation.copy(rotation);
                     animatedClouds.current.push({ index: index, growing: true });
                     putElementonMap(e.uv, "blue");
-                    addTree(cloudPosition.clone().addScaledVector(normal, -0.4), rotation);
+                    addTree(cloudPosition.clone().addScaledVector(normal, -0.2), rotation);
                     decrementRain();
                 } break;
 
             case Options.FIRE:
                 {
-                    const firePosition = intersectionPoint.clone().addScaledVector(normal, 0.2);
+                    const firePosition = intersectionPoint.clone().addScaledVector(normal, 0.25);
                     refFires.current[fires - 1].position.copy(firePosition);
                     refFires.current[fires - 1].rotation.copy(new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal)));
                     decrementFire();
@@ -240,16 +227,12 @@ const World = () => {
                 <group
                     ref={el => cloudGroupRefA.current[index] = el}
                     position={cloud.position} key={`rain-${index}`}
-                    scale={[0.0, 0.0, 0.0]}
+                    scale={0.05}
                 >
-                    <Cloud
-                        seed={index}
-                        speed={(index * 0.001) + 0.2}
-                    />
-                    <Rain />
+                    <CloudModel index={index} shouldAnimate={animatedClouds.current.filter(cloudIndex => cloudIndex.index === index)[0]} />
                 </group>)
             )}
-            {/* <Trees /> */}
+            <Trees />
 
             {refFires.current.map((fire, index) => (
                 <Fire ref={el => refFires.current[index] = el} scale={0.05} index={index} {...fire} key={`fire-${index}`} />
@@ -258,5 +241,49 @@ const World = () => {
         </group>
     );
 };
+export const CloudModel = ({ index, shouldAnimate }) => {
+    const [cloudOpacity, setCloudOpacity] = useState(0.0);
+    const [rainOpacity, setRainOpacity] = useState(0.0);
+    const [isGrowing, setIsGrowing] = useState(true);
+    const [isRaining, setIsRaining] = useState(false);
+
+    const stayTime = 4000; // ms
+
+    useFrame((_, delta) => {
+        if (shouldAnimate) {
+
+            if (cloudOpacity < 1.0 && isGrowing) {
+                setCloudOpacity(opacity => opacity + delta);
+                if (cloudOpacity >= 0.9) {
+                    setIsRaining(true);
+                    setTimeout(() => setIsGrowing(false), stayTime);
+                }
+            }
+
+            if (isRaining) {
+                setRainOpacity(opacity => opacity + delta);
+            } else {
+                setRainOpacity(opacity => opacity - delta);
+            }
+
+            if (!isGrowing && cloudOpacity > 0.0) {
+                if (isRaining) setIsRaining(false);
+                if (rainOpacity < 0.1) {
+                    setCloudOpacity(opacity => opacity - delta);
+                }
+            }
+        }
+    });
+
+    return (
+        <group><Cloud
+            seed={index}
+            speed={(index * 0.001) + 0.2}
+            opacity={cloudOpacity}
+        />
+            <Rain opacity={rainOpacity} />
+        </group>
+    )
+}
 
 export default World

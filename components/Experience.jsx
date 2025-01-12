@@ -1,7 +1,7 @@
 "use client";
 import { OrbitControls, Stats } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
-import World from './World';
+import World, { CloudModel } from './World';
 import Fire from './Fire';
 import { useRef } from 'react';
 
@@ -21,7 +21,6 @@ const Experience = () => {
                 />
                 <OrbitControls />
                 <World />
-                {/* <Fire ref={ref} index={1}/> */}
             </Canvas>
         </div>
     )

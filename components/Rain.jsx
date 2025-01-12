@@ -4,7 +4,7 @@ import { extend, useFrame } from '@react-three/fiber';
 
 extend({ LineBasicMaterial: THREE.LineBasicMaterial });
 
-const Rain = () => {
+const Rain = ({opacity}) => {
     const rainRef = useRef();
     const noiseRef = useRef();
     const gCount = 500;
@@ -91,6 +91,7 @@ const Rain = () => {
         <lineSegments ref={rainRef} position={[0, -13, 0]}>
             <lineBasicMaterial
                 transparent
+                opacity={opacity}
                 onBeforeCompile={(shader) => {
                     shaderRef.current = shader;
                     shader.uniforms.time = { value: 0 };
@@ -135,7 +136,7 @@ const Rain = () => {
                         float h = (pow(vH, 3.) * 0.5 + 0.5);
                         vec3 col = diffuse * h; // lighter close to the surface
                         col *= 1. + smoothstep(0.99, 1., h); // sparkle at the surface
-                        vec4 diffuseColor = vec4( col, op );
+                        vec4 diffuseColor = vec4( col, opacity );
                     `
                     );
                 }}

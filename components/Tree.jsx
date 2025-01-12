@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Vector3, Color } from "three";
 import { ToonShader } from "@/shaders/ToonShader";
@@ -19,15 +19,21 @@ const Tree = (props) => {
 
     const scale = useRef(new Vector3(0.0, 0.0, 0.0));
     const targetScale = new Vector3(0.05, 0.05, 0.05);
+
+    const [shouldAnimate, setShouldAnimate] = useState(false);
+    useEffect(() => {
+        setTimeout(() => setShouldAnimate(true), 4000);
+    }, []);
+
     useFrame(() => {
-        if (ref.current) {
+        if (ref.current && shouldAnimate) {
             ref.current.scale.set(scale.current.x, scale.current.y, scale.current.z);
             scale.current.lerp(targetScale, 0.01);
         }
     });
 
     return (
-        <group {...props} ref={ref} dispose={null} >
+        <group {...props} ref={ref} dispose={null} scale={0.0}>
             <mesh castShadow receiveShadow position={[0, 0, 0]} >
                 <coneGeometry args={[1.2, 1.5, 10]} />
                 <shaderMaterial attach="material" {...ToonShader} uniforms={uniformsToon} />
