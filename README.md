@@ -1,12 +1,10 @@
-# Mini-World
+# :globe_with_meridians: Mini-World
 
-This is a procedurally genearted sandbox world where you can experiment with fire and water. Made in Next.js 14, with Three.js and WebGL.
+**Mini World** is a 3D interactive game built with **React** and **Three.js**. In this game, players can create **rains** and **fires** to interact dynamically with a procedurally generated world.  
 
-TODO:
-make a map that keeps the state of fires and rains and updates based on fires and rains. we may want to use the three channels for this.
-r: fire
-g: tree
-b: rain
-when we add a rain on a fire, it fades out, and when it becomes below a threshold, it ends.
-when we add a rain the map becomes green and a trees grows there.
-when we add a fire, the trees fades out and ends. might want to make a burning animation for that.
+![preview](./preview.png) 
+# Main Elements
+The SandBox world has three elements:
+- Fire
+- Rain
+- Tree
