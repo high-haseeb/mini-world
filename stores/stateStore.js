@@ -10,14 +10,13 @@ export const Options = {
 const useStateStore = create((set) => ({
     activeOption: Options.NONE,
     setOption: (option) => set({ activeOption: option }),
+
     fires: 100,
-    decrementFire: () => set((state) => ({ fires: state.fires - 1 })),
     rains: 100,
-    decrementRain: () => set((state) => ({ rains: state.rains - 1 })),
     trees: 100,
+    decrementFire: () => set((state) => ({ fires: state.fires - 1 })),
+    decrementRain: () => set((state) => ({ rains: state.rains - 1 })),
     decrementTree: () => set((state) => ({ trees: state.trees - 1 })),
-    oribtLock: false,
-    setOrbitLock: (orbitLock) => set(() => ({ orbitLock })),
 }));
 
 export const useTreesStore = create((set) => ({
@@ -37,7 +36,7 @@ export const useTreesStore = create((set) => ({
             };
         }),
     treesState: [],
+    fireInfluenceRadius: 0.5, // the radius in which fire would burn a tree
 }));
-
 
 export default useStateStore;

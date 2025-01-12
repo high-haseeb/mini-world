@@ -158,6 +158,8 @@ const World = () => {
     });
 
 
+    const {treesState, removeTree, fireInfluenceRadius} = useTreesStore();
+
     const handlePointerDown = (e) => {
         e.stopPropagation();
 
@@ -191,6 +193,11 @@ const World = () => {
                     putElementonMap(e.uv, "blue");
                     addTree(cloudPosition.clone().addScaledVector(normal, -0.2), rotation);
                     decrementRain();
+                    for(let i = 0; i < refFires.current.length; i++) {
+                        if(refFires.current[i].position.distanceTo(cloudPosition) < fireInfluenceRadius) {
+                            refFires.current[i].position.copy(new THREE.Vector3(0)); // FIXME: animate the fire
+                        }
+                    }
                 } break;
 
             case Options.FIRE:
@@ -199,6 +206,14 @@ const World = () => {
                     refFires.current[fires - 1].position.copy(firePosition);
                     refFires.current[fires - 1].rotation.copy(new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal)));
                     decrementFire();
+
+                    for(let i = 0; i < treesState.length; i++) {
+                        const treePos = treesState[i].position;
+                        if (firePosition.distanceTo(treePos) < fireInfluenceRadius) {
+                            removeTree(i);
+                        }
+                    }
+
                     putElementonMap(e.uv, "red");
                 } break;
             default: break;
@@ -234,14 +249,17 @@ const World = () => {
             )}
             <Trees />
 
-            {refFires.current.map((fire, index) => (
-                <Fire ref={el => refFires.current[index] = el} scale={0.05} index={index} {...fire} key={`fire-${index}`} />
-            ))}
+            {
+                refFires.current.map((fire, index) => (
+                    <Fire ref={el => refFires.current[index] = el} scale={0.05} index={index} {...fire} key={`fire-${index}`} />
+                ))
+            }
 
         </group>
     );
 };
-export const CloudModel = ({ index, shouldAnimate }) => {
+
+const CloudModel = ({ index, shouldAnimate }) => {
     const [cloudOpacity, setCloudOpacity] = useState(0.0);
     const [rainOpacity, setRainOpacity] = useState(0.0);
     const [isGrowing, setIsGrowing] = useState(true);
@@ -276,11 +294,12 @@ export const CloudModel = ({ index, shouldAnimate }) => {
     });
 
     return (
-        <group><Cloud
-            seed={index}
-            speed={(index * 0.001) + 0.2}
-            opacity={cloudOpacity}
-        />
+        <group>
+            <Cloud
+                seed={index}
+                speed={(index * 0.001) + 0.2}
+                opacity={cloudOpacity}
+            />
             <Rain opacity={rainOpacity} />
         </group>
     )

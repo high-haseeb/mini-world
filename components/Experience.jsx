@@ -1,15 +1,12 @@
 "use client";
 import { OrbitControls, Stats } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
-import World, { CloudModel } from './World';
-import Fire from './Fire';
-import { useRef } from 'react';
+import World from './World';
 
 const Experience = () => {
-    const ref = useRef();
     return (
         <div className="w-full h-full">
-            <Canvas className="w-full h-full" camera={{ position: [0, 0, -7] }} shadows >
+            <Canvas className="w-full h-full" camera={{ position: [0, 0, -7] }} >
                 <Stats />
                 <ambientLight intensity={1.0} />
                 <directionalLight
