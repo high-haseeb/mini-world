@@ -1,4 +1,3 @@
-
 uniform float u_time;
 
 varying vec3 v_position;
@@ -87,19 +86,19 @@ float cnoise(vec3 P) {
     return 2.2 * n_xyz;
 }
 
+
 void main() {
-    v_position = position;
-    v_uv = uv;
-
     vec3 normalTarget = vec3(0.0, 3.0, 0.0);
-    float u_influence = 0.5;
-    vec3 toTarget = normalize(normalTarget - position);
+    vec3 toTarget = normalize(normalTarget - normal);
+    float u_influence = 0.4;
     vec3 modifiedNormal = mix(normal, toTarget, u_influence);
-    v_normal = modifiedNormal;
 
-    float displacement = mix(0.0, cnoise(modifiedNormal * 10.0 + (u_time * 0.5)), position.y + 1.0);
-    v_disp = displacement;
-    vec3 finalPosition = position + modifiedNormal * displacement * 1.5;
+    float displacement = cnoise(position * 3.0 + (u_time * 0.4));
 
+    vec3 displacedNormal = mix(vec3(0.0), modifiedNormal * displacement, position.y + 1.0) * 1.0;
+    vec3 finalPosition = position + displacedNormal;
+    v_normal = displacedNormal;
+    v_position = finalPosition;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(finalPosition, 1.0);
 }
+

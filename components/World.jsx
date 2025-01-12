@@ -208,7 +208,7 @@ const World = () => {
 
             case Options.FIRE:
                 {
-                    const firePosition = intersectionPoint.clone().addScaledVector(normal, 0.1);
+                    const firePosition = intersectionPoint.clone().addScaledVector(normal, 0.2);
                     refFires.current[fires - 1].position.copy(firePosition);
                     refFires.current[fires - 1].rotation.copy(new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal)));
                     decrementFire();
@@ -226,7 +226,7 @@ const World = () => {
         <group>
             {/* world */}
             <mesh onPointerDown={handlePointerDown} ref={refWorld} /* geometry={createCubeSphere()} */ >
-                <sphereGeometry args={[2, 512, 512]} />
+                <sphereGeometry args={[2, 128, 128]} />
                 <shaderMaterial
                     ref={matRef}
                     vertexShader={vertexShader}
@@ -251,9 +251,9 @@ const World = () => {
             )}
             {/* <Trees /> */}
 
-            {/* {refFires.current.map((fire, index) => ( */}
-            {/* <Fire ref={el => refFires.current[index] = el} scale={0.1} index={index} {...fire} key={`fire-${index}`} /> */}
-            {/* ))} */}
+            {refFires.current.map((fire, index) => (
+                <Fire ref={el => refFires.current[index] = el} scale={0.05} index={index} {...fire} key={`fire-${index}`} />
+            ))}
 
         </group>
     );

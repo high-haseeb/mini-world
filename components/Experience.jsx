@@ -2,8 +2,11 @@
 import { OrbitControls, Stats } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import World from './World';
+import Fire from './Fire';
+import { useRef } from 'react';
 
 const Experience = () => {
+    const ref = useRef();
     return (
         <div className="w-full h-full">
             <Canvas className="w-full h-full" camera={{ position: [0, 0, -7] }} shadows >
@@ -18,6 +21,7 @@ const Experience = () => {
                 />
                 <OrbitControls />
                 <World />
+                {/* <Fire ref={ref} index={1}/> */}
             </Canvas>
         </div>
     )

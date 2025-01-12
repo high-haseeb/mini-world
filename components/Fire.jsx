@@ -9,7 +9,7 @@ const Fire = forwardRef((props, ref) => {
 
     return (
         <mesh ref={ref} {...props}>
-            <sphereGeometry args={[1, 32, 16]} />
+            <sphereGeometry args={[1, 32, 32]} />
             <shaderMaterial 
                 vertexShader={vertexShader} 
                 fragmentShader={fragmentShader} 
