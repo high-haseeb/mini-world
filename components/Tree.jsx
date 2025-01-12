@@ -3,7 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import { Vector3, Color } from "three";
 import { ToonShader } from "@/shaders/ToonShader";
 
-const Tree = (props) => {
+const Tree = ({ position, rotation, burned }) => {
     const ref = useRef(null);
     const uniformsToon = {
         uTime: { value: 0.0 },
@@ -26,14 +26,19 @@ const Tree = (props) => {
     }, []);
 
     useFrame(() => {
-        if (ref.current && shouldAnimate) {
+        if (ref.current && shouldAnimate && !burned) {
+            ref.current.scale.set(scale.current.x, scale.current.y, scale.current.z);
+            scale.current.lerp(targetScale, 0.01);
+        }
+        if (burned) {
+            targetScale.set(0, 0, 0);
             ref.current.scale.set(scale.current.x, scale.current.y, scale.current.z);
             scale.current.lerp(targetScale, 0.01);
         }
     });
 
     return (
-        <group {...props} ref={ref} dispose={null} scale={0.0}>
+        <group position={position} rotation={rotation} ref={ref} dispose={null} scale={0.0}>
             <mesh castShadow receiveShadow position={[0, 0, 0]} >
                 <coneGeometry args={[1.2, 1.5, 10]} />
                 <shaderMaterial attach="material" {...ToonShader} uniforms={uniformsToon} />

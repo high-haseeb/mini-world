@@ -21,15 +21,16 @@ const useStateStore = create((set) => ({
 
 export const useTreesStore = create((set) => ({
     numTrees: 0,
-    addTree: (position, rotation) =>
+    addTree: (position, rotation, burned) =>
         set((state) => ({
             numTrees: state.numTrees + 1,
-            treesState: [...state.treesState, { position, rotation }],
+            treesState: [...state.treesState, { position, rotation, burned }],
         })),
     removeTree: (index) =>
         set((state) => {
             const updatedTreesState = [...state.treesState];
-            updatedTreesState.splice(index, 1);
+            updatedTreesState[index].burned = true;
+            // updatedTreesState.splice(index, 1);
             return {
                 numTrees: state.numTrees - 1,
                 treesState: updatedTreesState,

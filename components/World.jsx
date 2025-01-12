@@ -191,7 +191,7 @@ const World = () => {
                     cloudGroupRefA.current[index].rotation.copy(rotation);
                     animatedClouds.current.push({ index: index, growing: true });
                     putElementonMap(e.uv, "blue");
-                    addTree(cloudPosition.clone().addScaledVector(normal, -0.2), rotation);
+                    addTree(cloudPosition.clone().addScaledVector(normal, -0.2), rotation, false);
                     decrementRain();
                     for(let i = 0; i < refFires.current.length; i++) {
                         if(refFires.current[i].position.distanceTo(cloudPosition) < fireInfluenceRadius) {
@@ -203,17 +203,22 @@ const World = () => {
             case Options.FIRE:
                 {
                     const firePosition = intersectionPoint.clone().addScaledVector(normal, 0.25);
-                    refFires.current[fires - 1].position.copy(firePosition);
-                    refFires.current[fires - 1].rotation.copy(new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal)));
+                    const fireRotation = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal));
                     decrementFire();
 
+                    let treeBurned = false;
                     for(let i = 0; i < treesState.length; i++) {
                         const treePos = treesState[i].position;
-                        if (firePosition.distanceTo(treePos) < fireInfluenceRadius) {
+                        if (firePosition.distanceTo(treePos) < fireInfluenceRadius && !treesState[i].burned) {
                             removeTree(i);
+                            treeBurned = true;
                         }
                     }
 
+                    if (!treeBurned) {
+                        refFires.current[fires - 1].position.copy(firePosition);
+                        refFires.current[fires - 1].rotation.copy(fireRotation);
+                    }
                     putElementonMap(e.uv, "red");
                 } break;
             default: break;
