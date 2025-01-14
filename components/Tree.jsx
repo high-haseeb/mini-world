@@ -17,7 +17,7 @@ const Tree = ({ position, rotation, burned }) => {
         uLineColor4: { value: new Color(0x1c2618) },
     };
 
-    const scale = useRef(new Vector3(0.0, 0.0, 0.0));
+    const scale = useRef(new Vector3(0.005, 0.0, 0.005));
     const targetScale = new Vector3(0.05, 0.05, 0.05);
 
     const [shouldAnimate, setShouldAnimate] = useState(false);
@@ -30,6 +30,7 @@ const Tree = ({ position, rotation, burned }) => {
             ref.current.scale.set(scale.current.x, scale.current.y, scale.current.z);
             scale.current.lerp(targetScale, 0.01);
         }
+
         if (burned) {
             targetScale.set(0, 0, 0);
             ref.current.scale.set(scale.current.x, scale.current.y, scale.current.z);
