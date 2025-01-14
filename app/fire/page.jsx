@@ -31,7 +31,7 @@ const FireConfigurator = () => {
         color_d,
     } = useControls({
         target_offset: { value: 3.0, min: -5.0, max: 10.0 },
-        animation_speed: { value: 1.0, min: 0.1, max: 2.0 },
+        animation_speed: { value: 1.0, min: 0.1, max: 100.0 },
         u_influence: { value: 0.4, min: 0.0, max: 1.0 },
         color_a: { value: 'darkred', label: 'Primary Color' },
         color_b: { value: 'orange', label: 'Secondary Color' },
