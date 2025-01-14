@@ -9,8 +9,6 @@ import Fire from './Fire';
 import Rain from './Rain';
 import useStateStore, { Options, useTreesStore } from '@/stores/stateStore';
 import Trees from './Trees';
-import { createCubeSphere } from './utils';
-import { useControls } from 'leva';
 
 const World = () => {
     const { addTree } = useTreesStore();
