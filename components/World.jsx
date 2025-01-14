@@ -10,6 +10,7 @@ import Rain from './Rain';
 import useStateStore, { Options, useTreesStore } from '@/stores/stateStore';
 import Trees from './Trees';
 import { createCubeSphere } from './utils';
+import { useControls } from 'leva';
 
 const World = () => {
     const { addTree } = useTreesStore();
@@ -232,7 +233,7 @@ const World = () => {
                 {
                     // BUG: this is not correctly indentifying the height variations like in the vertex shader.
                     // Maybe try to download the smoothed out sdf map before hand and use it both in the vert shader and the height calculations.
-                    const firePosition = intersectionPoint.clone().lerp(intersectionPoint.clone().addScaledVector(normal, 0.2), height);
+                    const firePosition = intersectionPoint.clone().lerp(intersectionPoint.clone().addScaledVector(normal, 0.25), height);
                     const fireRotation = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal));
                     decrementFire();
 
@@ -286,7 +287,13 @@ const World = () => {
 
             {
                 refFires.current.map((fire, index) => (
-                    <Fire ref={el => refFires.current[index] = el} scale={0.05} index={index} {...fire} key={`fire-${index}`} />
+                    <Fire 
+                        ref={el => refFires.current[index] = el}
+                        scale={0.05}
+                        index={index}
+                        key={`fire-${index}`} 
+                        {...fire}
+                    />
                 ))
             }
 
