@@ -45,6 +45,7 @@ const World = () => {
     waterSDFMap.colorSpace = THREE.SRGBColorSpace;
 
     const [worldMapImageData, setWorldMapImageData] = useState(null);
+    const [SDFImageData, setSDFImageData] = useState(null)
     const [debugCanvas, setDebugCanvas] = useState(null);
 
     useEffect(() => {
@@ -63,7 +64,16 @@ const World = () => {
         ctx.drawImage(worldMap.image, 0, 0);
         const imageData = ctx.getImageData(0, 0, c.width, c.height);
         setWorldMapImageData(imageData);
-    }, [worldMap])
+
+        if (!sdfMap.image) return;
+        const sdfCanvas = document.createElement("canvas");
+        sdfCanvas.width = sdfMap.image.width;
+        sdfCanvas.height = sdfMap.image.height;
+        const sdfCtx = sdfCanvas.getContext("2d");
+        sdfCtx.drawImage(sdfMap.image, 0, 0);
+        setSDFImageData(sdfCtx.getImageData(0, 0, sdfCanvas.width, sdfCanvas.height));
+
+    }, [worldMap, sdfMap])
 
     const [elementsMap, setElementsMap] = useState(null);
     useEffect(() => {
@@ -120,25 +130,23 @@ const World = () => {
      * @returns {{ r: number, g: number, b: number }} - the color at the given UV coordinate.
      * @throws {Error} - if the `worldMapImageData` is not loaded.
      */
-    const getTexelValue = (u, v) => {
-        if (!worldMapImageData) {
-            console.error("The World Map Texture is not loaded yet. Please wait for it to be loaded");
-            return;
-        }
-
+    const getTexelValue = (u, v, map, debug = false) => {
         u = (u % 1 + 1) % 1;
         v = (v % 1 + 1) % 1;
 
-        const x = Math.floor(u * debugCanvas.width);
-        const y = Math.floor((1 - v) * debugCanvas.height);
-        const index = (y * debugCanvas.width + x) * 4;
+        const x = Math.floor(u * map.width);
+        const y = Math.floor((1 - v) * map.height);
+        const index = (y * map.width + x) * 4;
 
-        const ctx = debugCanvas.getContext("2d");
-        ctx.fillStyle = "red";
-        ctx.fillRect(x, y, 100, 100);
-        const r = worldMapImageData.data[index];
-        const g = worldMapImageData.data[index + 1];
-        const b = worldMapImageData.data[index + 2];
+        if(debug) {
+            const ctx = debugCanvas.getContext("2d");
+            ctx.fillStyle = "red";
+            ctx.fillRect(x, y, 100, 100);
+        }
+
+        const r = map.data[index];
+        const g = map.data[index + 1];
+        const b = map.data[index + 2];
 
         return { r, g, b };
     };
@@ -160,13 +168,27 @@ const World = () => {
 
     const {treesState, removeTree, fireInfluenceRadius} = useTreesStore();
 
+    /**
+    * glsl smoothstep implementation
+    * @param {number} edge0 - The lower edge of the range.
+    * @param {number} edge1 - The upper edge of the range.
+    * @param {number} x - The input value.
+    * @returns {number} The interpolated value.
+    */
+    function smoothstep(edge0, edge1, x) {
+        // Clamp x to the range [0, 1]
+        const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+        // Apply the smoothstep polynomial
+        return t * t * (3 - 2 * t);
+    }
+
     const handlePointerDown = (e) => {
         e.stopPropagation();
 
         let isValidPlace = true;
         const u = e.uv.x;
         const v = e.uv.y;
-        const color = getTexelValue(u, v);
+        const color = getTexelValue(u, v, worldMapImageData);
         if (color.g == 0) {
             console.warn("please place the fire on land :)")
             isValidPlace = false;
@@ -177,14 +199,19 @@ const World = () => {
             setTimeout(() => document.body.style.cursor = "auto", [500]);
             return;
         }
+        const heightTexelValue = getTexelValue(u, v, SDFImageData);
+        const heightScaleFactor = 0.2;
+        const height = smoothstep(0.0, 1.0, (heightTexelValue.r + heightTexelValue.g + heightTexelValue.b)/(255 * 3));
+        console.log("height at uv is: ", height);
 
         const intersectionPoint = e.point.clone();
-        const normal = intersectionPoint.clone().normalize();
+        const normal = e.normal.clone();
         switch (activeOption) {
 
             case Options.RAIN:
                 {
-                    const cloudPosition = intersectionPoint.clone().addScaledVector(normal, 0.5);
+                    const cloudPosition = intersectionPoint.clone().lerp(intersectionPoint.clone().addScaledVector(normal.clone(), 0.6), height);
+                    console.log("cloud position", cloudPosition);
                     const index = rains - 1;
                     cloudGroupRefA.current[index].position.copy(cloudPosition);
                     const rotation = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal))
@@ -193,6 +220,7 @@ const World = () => {
                     putElementonMap(e.uv, "blue");
                     addTree(cloudPosition.clone().addScaledVector(normal, -0.2), rotation, false);
                     decrementRain();
+
                     for(let i = 0; i < refFires.current.length; i++) {
                         if(refFires.current[i].position.distanceTo(cloudPosition) < fireInfluenceRadius) {
                             refFires.current[i].position.copy(new THREE.Vector3(0)); // FIXME: animate the fire
@@ -202,7 +230,9 @@ const World = () => {
 
             case Options.FIRE:
                 {
-                    const firePosition = intersectionPoint.clone().addScaledVector(normal, 0.25);
+                    // BUG: this is not correctly indentifying the height variations like in the vertex shader.
+                    // Maybe try to download the smoothed out sdf map before hand and use it both in the vert shader and the height calculations.
+                    const firePosition = intersectionPoint.clone().lerp(intersectionPoint.clone().addScaledVector(normal.clone(), 0.6), height);
                     const fireRotation = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal));
                     decrementFire();
 
