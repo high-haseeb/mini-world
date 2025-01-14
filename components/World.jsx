@@ -232,7 +232,7 @@ const World = () => {
                 {
                     // BUG: this is not correctly indentifying the height variations like in the vertex shader.
                     // Maybe try to download the smoothed out sdf map before hand and use it both in the vert shader and the height calculations.
-                    const firePosition = intersectionPoint.clone().lerp(intersectionPoint.clone().addScaledVector(normal.clone(), 0.6), height);
+                    const firePosition = intersectionPoint.clone().lerp(intersectionPoint.clone().addScaledVector(normal, 0.2), height);
                     const fireRotation = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal));
                     decrementFire();
 
