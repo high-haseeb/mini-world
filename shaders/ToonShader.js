@@ -1,16 +1,6 @@
 import { Color, Vector3 } from "three";
 
 export const ToonShader = {
-    uniforms: {
-        uDirLightPos: { value: new Vector3(1, 3, 0) },
-        uDirLightColor: { value: new Color(0xffffff) },
-        uAmbientLightColor: { value: new Color(0x3a2a1b) }, // Warm brown ambient light
-        uBaseColor: { value: new Color(0x8a5e3c) }, // Rich, vibrant brown
-        uLineColor1: { value: new Color(0xd1975a) }, // Vibrant tan
-        uLineColor2: { value: new Color(0xaf6f4b) }, // Warm mid-brown
-        uLineColor3: { value: new Color(0x6e4a33) }, // Deep brown
-        uLineColor4: { value: new Color(0x402417) }, // Dark, strong outline
-    },
     vertexShader: /* glsl */ `
   varying vec3 vNormal;
   varying vec3 vPosition;
@@ -41,6 +31,7 @@ export const ToonShader = {
   uniform vec3 uDirLightPos;
   uniform vec3 uDirLightColor;
   uniform vec3 uAmbientLightColor;
+  uniform float hovered;
 
   varying vec3 vNormal;
   varying vec3 vPosition;
@@ -74,7 +65,11 @@ export const ToonShader = {
     // Enhance vibrancy with a slight HDR-like boost
     color = pow(color, vec3(0.8)); // Gamma correction for vibrancy
 
-    gl_FragColor = vec4(color, 1.0);
+    if (hovered == 1.0) {
+        gl_FragColor = vec4(vec3(1.0), 1.0);
+    } else {
+        gl_FragColor = vec4(color, 1.0);
+    }
   }
 `,
 };

@@ -5,7 +5,7 @@ import { ToonShader } from "@/shaders/ToonShader";
 
 const Tree = ({ position, rotation, burned }) => {
     const ref = useRef(null);
-    const uniformsToon = {
+    const uniformsToon = useRef({
         uTime: { value: 0.0 },
         uDirLightPos: { value: new Vector3(1, 1, 0) },
         uDirLightColor: { value: new Color(0xffffff) },
@@ -15,7 +15,8 @@ const Tree = ({ position, rotation, burned }) => {
         uLineColor2: { value: new Color(0x3d5234) },
         uLineColor3: { value: new Color(0x2a3925) },
         uLineColor4: { value: new Color(0x1c2618) },
-    };
+        hovered: { value: false },
+    });
 
     const scale = useRef(new Vector3(0.005, 0.0, 0.005));
     const targetScale = new Vector3(0.05, 0.05, 0.05);
@@ -39,26 +40,28 @@ const Tree = ({ position, rotation, burned }) => {
     });
 
     return (
-        <group position={position} rotation={rotation} ref={ref} dispose={null} scale={0.0}>
+        <group position={position} rotation={rotation} ref={ref} dispose={null} scale={0.0}
+            onPointerEnter={() => uniformsToon.current.hovered.value = 1.0}
+            onPointerLeave={() => uniformsToon.current.hovered.value = 0.0}>
             <mesh castShadow receiveShadow position={[0, 0, 0]} >
                 <coneGeometry args={[1.2, 1.5, 10]} />
-                <shaderMaterial attach="material" {...ToonShader} uniforms={uniformsToon} />
+                <shaderMaterial attach="material" {...ToonShader} uniforms={uniformsToon.current} />
             </mesh>
             <mesh castShadow receiveShadow position={[0, 0.9, 0]}>
                 <coneGeometry args={[1.0, 1.2, 10]} />
-                <shaderMaterial attach="material" {...ToonShader} uniforms={uniformsToon} />
+                <shaderMaterial attach="material" {...ToonShader} uniforms={uniformsToon.current} />
             </mesh>
             <mesh castShadow receiveShadow position={[0, 1.6, 0]}>
                 <coneGeometry args={[0.8, 1.0, 10]} />
-                <shaderMaterial attach="material" {...ToonShader} uniforms={uniformsToon} />
+                <shaderMaterial attach="material" {...ToonShader} uniforms={uniformsToon.current} />
             </mesh>
             <mesh castShadow receiveShadow position={[0, 2.1, 0]}>
                 <coneGeometry args={[0.6, 0.8, 10]} />
-                <shaderMaterial attach="material" {...ToonShader} uniforms={uniformsToon} />
+                <shaderMaterial attach="material" {...ToonShader} uniforms={uniformsToon.current} />
             </mesh>
             <mesh castShadow receiveShadow position={[0, 2.5, 0]}>
                 <coneGeometry args={[0.4, 0.6, 10]} />
-                <shaderMaterial attach="material" {...ToonShader} uniforms={uniformsToon} />
+                <shaderMaterial attach="material" {...ToonShader} uniforms={uniformsToon.current} />
             </mesh>
 
             <mesh position={[0, -1.0, 0]}>
