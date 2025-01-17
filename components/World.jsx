@@ -162,7 +162,7 @@ const World = () => {
             matRef.current.uniforms.uTime.value = clock.getElapsedTime();
         }
         if(refWorld.current) {
-            refWorld.current.rotation.y += delta * 1.0;
+            // refWorld.current.rotation.y += delta * 1.0;
         }
 
 
