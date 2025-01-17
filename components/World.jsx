@@ -200,7 +200,7 @@ const World = () => {
         }
         const heightTexelValue = getTexelValue(u, v, SDFImageData);
         const heightScaleFactor = 0.2;
-        const height = smoothstep(0.0, 1.0, (heightTexelValue.r + heightTexelValue.g + heightTexelValue.b)/(255 * 3));
+        const height = smoothstep(0.0, 1.0, ((heightTexelValue.r / 255.0) + (heightTexelValue.g / 255.0) + (heightTexelValue.b / 255.0)));
         console.log("height at uv is: ", height);
 
         const intersectionPoint = e.point.clone();
@@ -217,7 +217,7 @@ const World = () => {
                     cloudGroupRefA.current[index].rotation.copy(rotation);
                     animatedClouds.current.push({ index: index, growing: true });
                     putElementonMap(e.uv, "blue");
-                    addTree(cloudPosition.clone().addScaledVector(normal, -0.2), rotation, false);
+                    addTree(cloudPosition.clone().addScaledVector(normal, -0.3), rotation, false);
                     decrementRain();
 
                     for(let i = 0; i < refFires.current.length; i++) {
@@ -231,7 +231,7 @@ const World = () => {
                 {
                     // BUG: this is not correctly indentifying the height variations like in the vertex shader.
                     // Maybe try to download the smoothed out sdf map before hand and use it both in the vert shader and the height calculations.
-                    const firePosition = intersectionPoint.clone().lerp(intersectionPoint.clone().addScaledVector(normal, 0.25), height);
+                    const firePosition = intersectionPoint.clone().lerp(intersectionPoint.clone().addScaledVector(normal.clone(), 0.20), height);
                     const fireRotation = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal));
                     decrementFire();
 
