@@ -3,6 +3,10 @@ uniform vec3 uColor1;
 uniform vec3 uColor2;
 uniform vec3 uColor3;
 uniform vec3 uColor4;
+uniform float uThresholdA;
+uniform float uThresholdB;
+uniform float uThresholdC;
+uniform float uIOR;
 
 varying vec3 v_position;
 varying vec2 v_uv;
@@ -34,14 +38,14 @@ float fresnel(float cos_theta_incident, float cos_critical, float refractive_rat
 void main() {
     vec3 normal = v_normal;
     vec3 viewDir = normalize(cameraPosition - v_position);
-    float fresnel =  fresnel(dot(viewDir, normalize(normal)), 0.0, 1.5);
+    float fresnel =  fresnel(dot(viewDir, normalize(normal)), 0.0, uIOR);
 
     vec3 col;
-    if (fresnel < 0.1) {
+    if (fresnel < uThresholdA) {
         col = uColor1;
-    } else if (fresnel < 0.8) {
+    } else if (fresnel < uThresholdB) {
         col = uColor2;
-    } else if (fresnel < 1.1) {
+    } else if (fresnel < uThresholdC) {
         col = uColor3;
     } else {
         col = uColor4;

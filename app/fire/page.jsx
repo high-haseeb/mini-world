@@ -29,10 +29,20 @@ const FireConfigurator = () => {
         color_b,
         color_c,
         color_d,
+        thresholdA,
+        thresholdB,
+        thresholdC,
+        ior,
     } = useControls({
         target_offset: { value: 3.0, min: -5.0, max: 10.0 },
         animation_speed: { value: 1.0, min: 0.1, max: 100.0 },
         u_influence: { value: 0.4, min: 0.0, max: 1.0 },
+
+        thresholdA: { value: 0.2, min: 0.0, max: 1.0 },
+        thresholdB: { value: 0.4, min: 0.0, max: 1.0 },
+        thresholdC: { value: 0.6, min: 0.0, max: 1.0 },
+        ior: { value: 1.5, min: 0.0, max: 10.0 },
+
         color_a: { value: 'darkred', label: 'Primary Color' },
         color_b: { value: 'orange', label: 'Secondary Color' },
         color_c: { value: 'yellow', label: 'Tertiary Color' },
@@ -48,6 +58,10 @@ const FireConfigurator = () => {
             uColor2: { value: new Color(color_b) },
             uColor3: { value: new Color(color_c) },
             uColor4: { value: new Color(color_d) },
+            uThresholdA: {value: thresholdA},
+            uThresholdB: {value: thresholdB},
+            uThresholdC: {value: thresholdC},
+            uIOR: {value: ior}
         }
     );
 
@@ -58,6 +72,10 @@ const FireConfigurator = () => {
         uniforms.current.uColor2.value = new Color(color_b);
         uniforms.current.uColor3.value = new Color(color_c);
         uniforms.current.uColor4.value = new Color(color_d);
+        uniforms.current.uThresholdA.value = thresholdA;
+        uniforms.current.uThresholdB.value = thresholdB;
+        uniforms.current.uThresholdC.value = thresholdC;
+        uniforms.current.uIOR.value = ior;
     }, [
         target_offset,
         u_influence,
@@ -65,6 +83,10 @@ const FireConfigurator = () => {
         color_b,
         color_c,
         color_d,
+        thresholdB,
+        thresholdA,
+        thresholdC,
+        ior
     ]);
 
     useFrame(({ clock }) => {
