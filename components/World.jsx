@@ -157,10 +157,14 @@ const World = () => {
         uWSDF: { value: waterSDFMap },
     }), [worldMap]);
 
-    useFrame(({ clock }) => {
+    useFrame(({ clock }, delta) => {
         if (matRef.current?.uniforms) {
             matRef.current.uniforms.uTime.value = clock.getElapsedTime();
         }
+        if(refWorld.current) {
+            refWorld.current.rotation.y += delta * 1.0;
+        }
+
 
     });
 
