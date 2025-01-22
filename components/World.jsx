@@ -13,7 +13,6 @@ import Trees from './Trees';
 const World = () => {
     const { addTree } = useTreesStore();
     const { fires, rains, decrementFire, decrementRain, activeOption } = useStateStore();
-    console.log("rendering the world component");
 
     const animatedClouds = useRef([]);
 
@@ -161,10 +160,6 @@ const World = () => {
         if (matRef.current?.uniforms) {
             matRef.current.uniforms.uTime.value = clock.getElapsedTime();
         }
-        if(refWorld.current) {
-            // refWorld.current.rotation.y += delta * 1.0;
-        }
-
 
     });
 
@@ -203,8 +198,7 @@ const World = () => {
             return;
         }
         const heightTexelValue = getTexelValue(u, v, SDFImageData);
-        const heightScaleFactor = 0.2;
-        const height = smoothstep(0.0, 1.0, ((heightTexelValue.r / 255.0) + (heightTexelValue.g / 255.0) + (heightTexelValue.b / 255.0)));
+        const height =(heightTexelValue.r / 255.0) + (heightTexelValue.g / 255.0) + (heightTexelValue.b / 255.0);
         console.log("height at uv is: ", height);
 
         const intersectionPoint = e.point.clone();
@@ -213,7 +207,7 @@ const World = () => {
 
             case Options.RAIN:
                 {
-                    const cloudPosition = intersectionPoint.clone().lerp(intersectionPoint.clone().addScaledVector(normal.clone(), 0.6), height);
+                    const cloudPosition = intersectionPoint.clone().addScaledVector(normal.clone(), 0.3 * height);
                     console.log("cloud position", cloudPosition);
                     const index = rains - 1;
                     cloudGroupRefA.current[index].position.copy(cloudPosition);
@@ -221,7 +215,7 @@ const World = () => {
                     cloudGroupRefA.current[index].rotation.copy(rotation);
                     animatedClouds.current.push({ index: index, growing: true });
                     putElementonMap(e.uv, "blue");
-                    addTree(cloudPosition.clone().addScaledVector(normal, -0.3), rotation, false);
+                    addTree(intersectionPoint.clone().addScaledVector(normal, 0.1 * height), rotation, false);
                     decrementRain();
 
                     for(let i = 0; i < refFires.current.length; i++) {
@@ -233,9 +227,7 @@ const World = () => {
 
             case Options.FIRE:
                 {
-                    // BUG: this is not correctly indentifying the height variations like in the vertex shader.
-                    // Maybe try to download the smoothed out sdf map before hand and use it both in the vert shader and the height calculations.
-                    const firePosition = intersectionPoint.clone().lerp(intersectionPoint.clone().addScaledVector(normal.clone(), 0.15), height);
+                    const firePosition = intersectionPoint.clone().add(normal.clone().multiplyScalar(0.09 * height))
                     const fireRotation = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal));
                     decrementFire();
 
