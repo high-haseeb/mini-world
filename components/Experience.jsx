@@ -16,7 +16,7 @@ const Experience = () => {
                     shadow-mapSize-width={2048}
                     shadow-mapSize-height={2048}
                 />
-                <OrbitControls />
+                <OrbitControls autoRotate/>
                 <World />
             </Canvas>
         </div>
