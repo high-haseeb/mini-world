@@ -1,10 +1,12 @@
 uniform sampler2D uSDF;
 
+varying vec3 vPosition;
 varying float height;
 varying vec2 vUv;
 
 void main()
 {
+    vPosition = position;
     vUv = uv;
     float delta = 0.1;
     vec3 texel = texture2D(uSDF, uv).rgb;

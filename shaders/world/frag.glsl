@@ -3,6 +3,7 @@ uniform sampler2D uWorldMap;
 uniform sampler2D uSDF;
 varying float height;
 varying vec2 vUv;
+varying vec3 vPosition;
 uniform sampler2D uWSDF;
 
 #define GREEN  vec3(0.0, 1.0, 0.0)
@@ -10,8 +11,7 @@ uniform sampler2D uWSDF;
 #define WHITE vec3(1.0, 1.0, 1.0)
 #define BLACK vec3(0.0, 0.0, 0.0)
 
-
-#define WAVE_SHARPNESS 1.0
+#define WAVE_SHARPNESS 5.0
 #define WAVE_SPEED 1.0
 float rand(vec2 n) {
     return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
@@ -32,13 +32,14 @@ void main() {
     vec3 WorldTexel = texture2D(uWorldMap, vUv).rgb;
     vec3 Color;
     vec3 texel = texture2D(uSDF, vUv).rgb;
+    vec3 texelWater = texture2D(uWSDF, vUv).rgb;
+    float distanceFromLand = texelWater.r + texelWater.g + texelWater.b;
     if (WorldTexel.g > 0.01) {
         Color = mix(GREEN * 0.6, GREEN * 1.5, height);
-    } else if (WorldTexel.r > 0.01) {
-        vec3 texel = texture2D(uWSDF, vUv).rgb;
-        float distanceFromLand = texel.r + texel.g + texel.b;
-        // float waveEffect = sin((distanceFromLand * -1.0 + uTime * noise(vec2(distanceFromLand)) ) * 3.14159) * 0.5 + 0.5;
-        Color = mix(BLUE, BLUE * 0.8, distanceFromLand);
+    } else if (WorldTexel.r > 0.2 && distanceFromLand < 1.0) {
+        vec2 uv = (vPosition.xy + vec2(1.0)) * 0.5;
+        float waveEffect = sin((distanceFromLand * WAVE_SHARPNESS + uTime * WAVE_SPEED + noise(uv * 10.0)) * 3.14159) * 0.5 + 0.5 + noise(uv * 20.0);
+        Color = mix(BLUE * 0.8, BLUE, step(0.5, waveEffect));
     } else {
         Color = BLUE;
     }
