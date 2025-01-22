@@ -1,13 +1,12 @@
 "use client";
-import fragmentShader from '@/shaders/world/frag.glsl';
-import vertexShader from '@/shaders/world/vert.glsl';
 import { Cloud, useTexture } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import Fire from './Fire';
 import Rain from './Rain';
 import useStateStore, { Options, useTreesStore } from '@/stores/stateStore';
+import WorldShader from './WorldModel';
 import Trees from './Trees';
 
 const World = () => {
@@ -30,7 +29,6 @@ const World = () => {
         refFires.current = [...initProps];
     }, []);
 
-    const matRef = useRef();
 
     const worldMap = useTexture("/map/WorldMap.svg");
     worldMap.colorSpace = THREE.SRGBColorSpace;
@@ -121,13 +119,6 @@ const World = () => {
         ctx.fill();
     }
 
-    /**
-     * Returns the texel value for the given UV coordinate And 
-     * @param {number} u - the U coordinate; 
-     * @param {number} v - the V coordinate; 
-     * @returns {{ r: number, g: number, b: number }} - the color at the given UV coordinate.
-     * @throws {Error} - if the `worldMapImageData` is not loaded.
-     */
     const getTexelValue = (u, v, map, debug = false) => {
         u = (u % 1 + 1) % 1;
         v = (v % 1 + 1) % 1;
@@ -136,7 +127,7 @@ const World = () => {
         const y = Math.floor((1 - v) * map.height);
         const index = (y * map.width + x) * 4;
 
-        if(debug) {
+        if (debug) {
             const ctx = debugCanvas.getContext("2d");
             ctx.fillStyle = "red";
             ctx.fillRect(x, y, 100, 100);
@@ -149,35 +140,11 @@ const World = () => {
         return { r, g, b };
     };
 
-    const uniforms = useMemo(() => ({
-        uTime: { value: 0.0 },
-        uWorldMap: { value: worldMap },
-        uSDF: { value: sdfMap },
-        uWSDF: { value: waterSDFMap },
-    }), [worldMap]);
+    const { treesState, removeTree, fireInfluenceRadius } = useTreesStore();
 
-    useFrame(({ clock }, delta) => {
-        if (matRef.current?.uniforms) {
-            matRef.current.uniforms.uTime.value = clock.getElapsedTime();
-        }
-
-    });
-
-
-    const {treesState, removeTree, fireInfluenceRadius} = useTreesStore();
-
-    /**
-    * glsl smoothstep implementation
-    * @param {number} edge0 - The lower edge of the range.
-    * @param {number} edge1 - The upper edge of the range.
-    * @param {number} x - The input value.
-    * @returns {number} The interpolated value.
-    */
     function smoothstep(edge0, edge1, x) {
-        // Clamp x to the range [0, 1]
-        const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
-        // Apply the smoothstep polynomial
-        return t * t * (3 - 2 * t);
+        const t = Math.max(0.0, Math.min(1.0, (x - edge0) / (edge1 - edge0)));
+        return t * t * (3.0 - 2.0 * t);
     }
 
     const handlePointerDown = (e) => {
@@ -198,16 +165,15 @@ const World = () => {
             return;
         }
         const heightTexelValue = getTexelValue(u, v, SDFImageData);
-        const height =(heightTexelValue.r / 255.0) + (heightTexelValue.g / 255.0) + (heightTexelValue.b / 255.0);
-        console.log("height at uv is: ", height);
-
-        const intersectionPoint = e.point.clone();
+        // const height = smoothstep(0, 1, (heightTexelValue.r / 255.0) + (heightTexelValue.g / 255.0) + (heightTexelValue.b / 255.0));
+        const height = (heightTexelValue.r / 255.0) + (heightTexelValue.g / 255.0) + (heightTexelValue.b / 255.0);
+        const iPoint = e.point.clone();
         const normal = e.normal.clone();
-        switch (activeOption) {
 
+        switch (activeOption) {
             case Options.RAIN:
                 {
-                    const cloudPosition = intersectionPoint.clone().addScaledVector(normal.clone(), 0.3 * height);
+                    const cloudPosition = iPoint.clone().addScaledVector(normal.clone(), 0.3 * height);
                     console.log("cloud position", cloudPosition);
                     const index = rains - 1;
                     cloudGroupRefA.current[index].position.copy(cloudPosition);
@@ -215,11 +181,11 @@ const World = () => {
                     cloudGroupRefA.current[index].rotation.copy(rotation);
                     animatedClouds.current.push({ index: index, growing: true });
                     putElementonMap(e.uv, "blue");
-                    addTree(intersectionPoint.clone().addScaledVector(normal, 0.1 * height), rotation, false);
+                    addTree(iPoint.clone().addScaledVector(normal, 0.1 * height), rotation, false);
                     decrementRain();
 
-                    for(let i = 0; i < refFires.current.length; i++) {
-                        if(refFires.current[i].position.distanceTo(cloudPosition) < fireInfluenceRadius) {
+                    for (let i = 0; i < refFires.current.length; i++) {
+                        if (refFires.current[i].position.distanceTo(iPoint) < 0.4) {
                             refFires.current[i].position.copy(new THREE.Vector3(0)); // FIXME: animate the fire
                         }
                     }
@@ -227,16 +193,18 @@ const World = () => {
 
             case Options.FIRE:
                 {
-                    const firePosition = intersectionPoint.clone().add(normal.clone().multiplyScalar(0.09 * height))
+                    const firePosition = iPoint.clone().add(normal.clone().multiplyScalar(0.09 * height))
                     const fireRotation = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal));
                     decrementFire();
 
                     let treeBurned = false;
-                    for(let i = 0; i < treesState.length; i++) {
+                    for (let i = 0; i < treesState.length; i++) {
                         const treePos = treesState[i].position;
                         if (firePosition.distanceTo(treePos) < fireInfluenceRadius && !treesState[i].burned) {
                             removeTree(i);
                             treeBurned = true;
+                            refFires.current[fires - 1].position.copy(treePos);
+                            refFires.current[fires - 1].rotation.copy(treesState[i].rotation);
                         }
                     }
 
@@ -252,21 +220,10 @@ const World = () => {
     };
 
     const refFires = useRef(new Array(100));
-    const refWorld = useRef(null);
 
     return (
         <group>
-            {/* world */}
-            <mesh onPointerDown={handlePointerDown} ref={refWorld} /* geometry={createCubeSphere()} */ >
-                <sphereGeometry args={[2, 256, 256]} />
-                <shaderMaterial
-                    ref={matRef}
-                    vertexShader={vertexShader}
-                    fragmentShader={fragmentShader}
-                    uniforms={uniforms}
-                    attach="material"
-                />
-            </mesh>
+            <WorldShader handlePointerDown={handlePointerDown} />
 
             {cloudPropsA.map((cloud, index) => (
                 <group
@@ -281,11 +238,11 @@ const World = () => {
 
             {
                 refFires.current.map((fire, index) => (
-                    <Fire 
+                    <Fire
                         ref={el => refFires.current[index] = el}
                         scale={0.05}
                         index={index}
-                        key={`fire-${index}`} 
+                        key={`fire-${index}`}
                         {...fire}
                     />
                 ))
