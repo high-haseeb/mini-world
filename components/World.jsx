@@ -258,7 +258,7 @@ const World = () => {
         <group>
             {/* world */}
             <mesh onPointerDown={handlePointerDown} ref={refWorld} /* geometry={createCubeSphere()} */ >
-                <sphereGeometry args={[2, 128, 128]} />
+                <sphereGeometry args={[2, 256, 256]} />
                 <shaderMaterial
                     ref={matRef}
                     vertexShader={vertexShader}
