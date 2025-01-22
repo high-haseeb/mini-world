@@ -37,7 +37,7 @@ export const useTreesStore = create((set) => ({
             };
         }),
     treesState: [],
-    fireInfluenceRadius: 0.5, // the radius in which fire would burn a tree
+    fireInfluenceRadius: 0.1, // the radius in which fire would burn a tree
 }));
 
 export default useStateStore;
