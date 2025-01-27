@@ -13,31 +13,34 @@ const World = () => {
     const { addTree } = useTreesStore();
     const { fires, rains, decrementFire, decrementRain, activeOption } = useStateStore();
 
-    const animatedClouds = useRef([]);
+    const refClouds = useRef([]);
+    const refFires  = useRef([]);
 
     const cloudGroupRefA = useRef([]);
-    const cloudElementsRefA = useRef([]);
     const [cloudPropsA, setCloudPropsA] = useState([]);
 
     useEffect(() => {
         let initProps = [];
         for (let i = 0; i < 100; i++) {
-            initProps.push({ position: new THREE.Vector3(), normal: new THREE.Vector3(), opacity: 1.0 });
-            cloudElementsRefA.current.push(1.0);
+            initProps.push({ 
+                position:      new THREE.Vector3(),
+                normal:        new THREE.Vector3(),
+                shouldAnimate: false
+            });
         }
         setCloudPropsA([...initProps]);
         refFires.current = [...initProps];
     }, []);
 
-
-    const worldMap = useTexture("/map/WorldMap.svg");
+    const worldMap      = useTexture("/map/WorldMap.svg");
     worldMap.colorSpace = THREE.SRGBColorSpace;
-    const sdfMap = useTexture("/map/sdf.png");
-    sdfMap.colorSpace = THREE.SRGBColorSpace;
-    sdfMap.wrapS = THREE.ClampToEdgeWrapping
-    sdfMap.wrapT = THREE.ClampToEdgeWrapping
 
-    const waterSDFMap = useTexture("/map/waterSDF.png");
+    const sdfMap      = useTexture("/map/sdf.png");
+    sdfMap.colorSpace = THREE.SRGBColorSpace;
+    sdfMap.wrapS      = THREE.ClampToEdgeWrapping
+    sdfMap.wrapT      = THREE.ClampToEdgeWrapping
+
+    const waterSDFMap      = useTexture("/map/waterSDF.png");
     waterSDFMap.colorSpace = THREE.SRGBColorSpace;
 
     const [worldMapImageData, setWorldMapImageData] = useState(null);
@@ -46,16 +49,19 @@ const World = () => {
 
     useEffect(() => {
         if (!worldMap.image) return;
+
         const c = document.createElement("canvas");
         setDebugCanvas(c);
-        c.width = worldMap.image.width;
+
+        c.width  = worldMap.image.width;
         c.height = worldMap.image.height;
         c.style.position = "fixed";
-        c.style.bottom = "10rem";
-        c.style.left = "4rem";
-        c.style.width = "20rem";
-        c.style.height = "auto";
+        c.style.bottom   = "10rem";
+        c.style.left     = "4rem";
+        c.style.width    = "20rem";
+        c.style.height   = "auto";
         document.body.appendChild(c);
+
         const ctx = c.getContext("2d");
         ctx.drawImage(worldMap.image, 0, 0);
         const imageData = ctx.getImageData(0, 0, c.width, c.height);
@@ -70,54 +76,6 @@ const World = () => {
         setSDFImageData(sdfCtx.getImageData(0, 0, sdfCanvas.width, sdfCanvas.height));
 
     }, [worldMap, sdfMap])
-
-    const [elementsMap, setElementsMap] = useState(null);
-    useEffect(() => {
-        if (elementsMap) return;
-        const eCanvas = document.createElement("canvas");
-        eCanvas.width = worldMap.image.width;
-        eCanvas.height = worldMap.image.height;
-        const ctx = eCanvas.getContext("2d");
-        // ctx.clearRect(0, 0, eCanvas.width, eCanvas.height);
-        ctx.fillStyle = "#181818";
-        ctx.fillRect(0, 0, eCanvas.width, eCanvas.height);
-        setElementsMap(eCanvas);
-
-        eCanvas.style.position = "fixed";
-        eCanvas.style.top = "10rem";
-        eCanvas.style.left = "4rem";
-        eCanvas.style.width = "20rem";
-        eCanvas.style.height = "auto";
-        document.body.appendChild(eCanvas);
-    }, [worldMap]);
-
-    /**
-    * Draws a circle representing an element on the map.
-    * The RGBA channels encode the following:
-    * Red   - Fires
-    * Blue  - Rains
-    * Green - Trees
-    *
-    * @param {Object} position - The position of the element on the map.
-    * @param {number} position.x - The x-coordinate in normalized (0 to 1) space.
-    * @param {number} position.y - The y-coordinate in normalized (0 to 1) space.
-    * @param {string} elementColor - The CSS color string used to draw the element.
-    */
-    const putElementonMap = (position, elementColor) => {
-        if (!elementsMap) return;
-        const radius = 100.0;
-        const ctx = elementsMap.getContext("2d");
-
-        let u = (position.x % 1 + 1) % 1;
-        let v = (position.y % 1 + 1) % 1;
-
-        const x = Math.floor(u * elementsMap.width);
-        const y = Math.floor((1 - v) * elementsMap.height);
-        ctx.beginPath();
-        ctx.fillStyle = elementColor;
-        ctx.arc(x, y, radius, 0, Math.PI * 2);
-        ctx.fill();
-    }
 
     const getTexelValue = (u, v, map, debug = false) => {
         u = (u % 1 + 1) % 1;
@@ -142,10 +100,10 @@ const World = () => {
 
     const { treesState, removeTree, fireInfluenceRadius } = useTreesStore();
 
-    function smoothstep(edge0, edge1, x) {
-        const t = Math.max(0.0, Math.min(1.0, (x - edge0) / (edge1 - edge0)));
-        return t * t * (3.0 - 2.0 * t);
-    }
+    // function smoothstep(edge0, edge1, x) {
+    //     const t = Math.max(0.0, Math.min(1.0, (x - edge0) / (edge1 - edge0)));
+    //     return t * t * (3.0 - 2.0 * t);
+    // }
 
     const handlePointerDown = (e) => {
         e.stopPropagation();
@@ -165,7 +123,6 @@ const World = () => {
             return;
         }
         const heightTexelValue = getTexelValue(u, v, SDFImageData);
-        // const height = smoothstep(0, 1, (heightTexelValue.r / 255.0) + (heightTexelValue.g / 255.0) + (heightTexelValue.b / 255.0));
         const height = (heightTexelValue.r / 255.0) + (heightTexelValue.g / 255.0) + (heightTexelValue.b / 255.0);
         const iPoint = e.point.clone();
         const normal = e.normal.clone();
@@ -179,14 +136,15 @@ const World = () => {
                     cloudGroupRefA.current[index].position.copy(cloudPosition);
                     const rotation = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal))
                     cloudGroupRefA.current[index].rotation.copy(rotation);
-                    animatedClouds.current.push({ index: index, growing: true });
-                    putElementonMap(e.uv, "blue");
+                    refClouds.current.push({ index: index, growing: true });
                     addTree(iPoint.clone().addScaledVector(normal, 0.1 * height), rotation, false);
                     decrementRain();
 
                     for (let i = 0; i < refFires.current.length; i++) {
                         if (refFires.current[i].position.distanceTo(iPoint) < 0.4) {
-                            refFires.current[i].position.copy(new THREE.Vector3(0)); // FIXME: animate the fire
+                            setTimeout(() => {
+                                refFires.current[i].shouldAnimate = true;
+                            }, 1500);
                         }
                     }
                 } break;
@@ -212,14 +170,11 @@ const World = () => {
                         refFires.current[fires - 1].position.copy(firePosition);
                         refFires.current[fires - 1].rotation.copy(fireRotation);
                     }
-                    putElementonMap(e.uv, "red");
                 } break;
             default: break;
         }
 
     };
-
-    const refFires = useRef(new Array(100));
 
     return (
         <group>
@@ -231,7 +186,7 @@ const World = () => {
                     position={cloud.position} key={`rain-${index}`}
                     scale={0.05}
                 >
-                    <CloudModel index={index} shouldAnimate={animatedClouds.current.filter(cloudIndex => cloudIndex.index === index)[0]} />
+                    <CloudModel index={index} shouldAnimate={refClouds.current.filter(cloudIndex => cloudIndex.index === index)[0]} />
                 </group>)
             )}
             <Trees />
@@ -298,4 +253,4 @@ const CloudModel = ({ index, shouldAnimate }) => {
     )
 }
 
-export default World
+export default World;
