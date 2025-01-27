@@ -5,11 +5,14 @@ export const Options = {
     TREE: "tree",
     FIRE: "fire",
     RAIN: "rain",
-}
+};
 
 const useStateStore = create((set) => ({
     activeOption: Options.NONE,
     setOption: (option) => set({ activeOption: option }),
+    autoRotate : true,
+    stopAutoRotate:  () => set({ autoRotate: false }),
+    startAutoRotate: () => set({ autoRotate: true }),
 
     fires: 100,
     rains: 100,

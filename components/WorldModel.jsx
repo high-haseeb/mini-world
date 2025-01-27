@@ -3,6 +3,7 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
 import { SRGBColorSpace } from "three";
+import useStateStore from "@/stores/stateStore";
 
 const WorldShader = ({ handlePointerDown }) => {
 
@@ -81,6 +82,7 @@ const WorldShader = ({ handlePointerDown }) => {
     `;
 
     const matRef = useRef(null);
+    const { stopAutoRotate, startAutoRotate } = useStateStore();
 
     const handleOnBeforeCompile = (shader) => {
         matRef.current.userData.shader = shader;
@@ -106,7 +108,12 @@ const WorldShader = ({ handlePointerDown }) => {
     });
 
     return (
-        <mesh receiveShadow onPointerDown={handlePointerDown}>
+        <mesh 
+            receiveShadow
+            onPointerDown={handlePointerDown}
+            onPointerEnter={stopAutoRotate}
+            onPointerLeave={startAutoRotate}
+        >
             <sphereGeometry args={[2, 128, 128]}/>
             <meshStandardMaterial
                 metalness={0.4}

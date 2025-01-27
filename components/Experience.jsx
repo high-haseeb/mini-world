@@ -2,8 +2,11 @@
 import { Environment, OrbitControls, Stats } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import World from './World';
+import useStateStore from '@/stores/stateStore';
 
 const Experience = () => {
+    const { autoRotate } = useStateStore();
+
     return (
         <div className="w-full h-full">
             <Canvas className="w-full h-full" camera={{ position: [0, 0, -7] }} shadows>
@@ -23,7 +26,7 @@ const Experience = () => {
                 <spotLight position={[0, 5, 0]} angle={0.15} intensity={1} castShadow />
 
                 <Environment preset='city' environmentIntensity={0.4} />
-                <OrbitControls autoRotate />
+                <OrbitControls autoRotate={autoRotate} />
                 <World />
             </Canvas>
         </div>
