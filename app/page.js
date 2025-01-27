@@ -12,6 +12,7 @@ export default function Home() {
             <Experience />
             <OptionsSelector />
             <Stats />
+            <MouseImage />
         </div >
     );
 }
@@ -68,54 +69,88 @@ const OptionsSelector = () => {
             <OptionButton element="rain" option={Options.RAIN} />
         </div>
     )
-}
+};
+
+const MouseImage = () => {
+    const [pointer, setPointer] = useState({ x: 0, y: 0 });
+    const { activeOption } = useStateStore();
+
+    useEffect(() => {
+        const handleMouseMove = (event) => { setPointer({ x: event.clientX, y: event.clientY }); };
+        window.addEventListener("mousemove", handleMouseMove);
+        return () => { window.removeEventListener("mousemove", handleMouseMove); };
+    }, []);
+
+    return (
+        <>{
+            activeOption === Options.FIRE ?
+                <Image src={`/icons/fire.svg`} width={36} height={36} alt="mouse follower" className={`fixed pointer-events-none`}
+                    style={{
+                        top: pointer.y,
+                        left: pointer.x,
+                        position: "absolute",
+                    }}
+                />
+                : activeOption == Options.RAIN ?
+                    <Image src={`/icons/rain.svg`} width={36} height={36} alt="mouse follower" className={`fixed pointer-events-none`}
+                        style={{
+                            top: pointer.y,
+                            left: pointer.x,
+                            position: "absolute",
+                        }}
+                    />
+                    :
+                    <></>
+        }</>
+    );
+};
 
 const Overlay = () => {
-  const [commitMessage, setCommitMessage] = useState('');
-  const [commitTime, setCommitTime] = useState('');
+    const [commitMessage, setCommitMessage] = useState('');
+    const [commitTime, setCommitTime] = useState('');
 
-  useEffect(() => {
-    const fetchCommitMessage = async () => {
-      const owner = 'high-haseeb';
-      const repo = 'mini-world';
-      const url = `https://api.github.com/repos/${owner}/${repo}/commits?per_page=1`;
-      
-      try {
-        const response = await fetch(url);
-        const data = await response.json();
+    useEffect(() => {
+        const fetchCommitMessage = async () => {
+            const owner = 'high-haseeb';
+            const repo = 'mini-world';
+            const url = `https://api.github.com/repos/${owner}/${repo}/commits?per_page=1`;
 
-        if (data.length > 0) {
-          setCommitMessage(data[0].commit.message);
-          
-          // Get commit time and format it
-          const commitDate = new Date(data[0].commit.author.date);
-          setCommitTime(commitDate.toLocaleString());
-        }
-      } catch (error) {
-        console.error('Error fetching commit data:', error);
-        setCommitMessage('Error fetching commit message');
-      }
-    };
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
 
-    fetchCommitMessage();
-  }, []);
+                if (data.length > 0) {
+                    setCommitMessage(data[0].commit.message);
 
-  return (
-    <>
-      <div className="absolute top-6 left-6 flex flex-col select-none">
-        <span className="font-semibold text-5xl">Mini World</span>
-        <span className="font-extralight"> version: 0.0.3</span>
-        {commitMessage && (
-          <span className="font-light text-sm mt-2">Last Update: {commitMessage}</span>
-        )}
-        {commitTime && (
-          <span className="font-light text-sm mt-1">Committed on: {commitTime}</span>
-        )}
-      </div>
-      <Link href="https://github.com/high-haseeb/mini-world" className="absolute bottom-6 left-6">
-        <Image src={'/icons/github-mark.svg'} width={16} height={16} alt="github-link" />
-      </Link>
-    </>
-  );
+                    // Get commit time and format it
+                    const commitDate = new Date(data[0].commit.author.date);
+                    setCommitTime(commitDate.toLocaleString());
+                }
+            } catch (error) {
+                console.error('Error fetching commit data:', error);
+                setCommitMessage('Error fetching commit message');
+            }
+        };
+
+        fetchCommitMessage();
+    }, []);
+
+    return (
+        <>
+            <div className="absolute top-6 left-6 flex flex-col select-none">
+                <span className="font-semibold text-5xl">Mini World</span>
+                <span className="font-extralight"> version: 0.0.3</span>
+                {commitMessage && (
+                    <span className="font-light text-sm mt-2">Last Update: {commitMessage}</span>
+                )}
+                {commitTime && (
+                    <span className="font-light text-sm mt-1">Committed on: {commitTime}</span>
+                )}
+            </div>
+            <Link href="https://github.com/high-haseeb/mini-world" className="absolute bottom-6 left-6">
+                <Image src={'/icons/github-mark.svg'} width={16} height={16} alt="github-link" />
+            </Link>
+        </>
+    );
 };
 
