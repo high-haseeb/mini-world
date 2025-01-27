@@ -8,7 +8,7 @@ void main()
 {
     vPosition = position;
     vUv = uv;
-    float delta = 0.1;
+    float delta = 0.0;
     vec3 texel = texture2D(uSDF, uv).rgb;
     height = texel.r + texel.g + texel.b;
     vec3 finalPosition = position + normal * (height * delta);

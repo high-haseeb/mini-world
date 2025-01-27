@@ -123,21 +123,21 @@ const World = () => {
             setTimeout(() => document.body.style.cursor = "auto", [500]);
             return;
         }
-        const heightTexelValue = getTexelValue(u, v, SDFImageData);
-        const height = (heightTexelValue.r / 255.0) + (heightTexelValue.g / 255.0) + (heightTexelValue.b / 255.0);
+        // const heightTexelValue = getTexelValue(u, v, SDFImageData);
+        // const height = (heightTexelValue.r / 255.0) + (heightTexelValue.g / 255.0) + (heightTexelValue.b / 255.0);
         const iPoint = e.point.clone();
         const normal = e.normal.clone();
 
         switch (activeOption) {
             case Options.RAIN:
                 {
-                    const cloudPosition = iPoint.clone().addScaledVector(normal.clone(), 0.3 * height);
+                    const cloudPosition = iPoint.clone().addScaledVector(normal.clone(), 0.5);
                     const index = rains - 1;
                     cloudGroupRefA.current[index].position.copy(cloudPosition);
                     const rotation = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal))
                     cloudGroupRefA.current[index].rotation.copy(rotation);
                     refClouds.current.push({ index: index, growing: true });
-                    addTree(iPoint.clone().addScaledVector(normal, 0.1 * height), rotation, false);
+                    addTree(iPoint.clone().addScaledVector(normal, 0.1), rotation, false);
                     decrementRain();
 
                     for (let i = 0; i < refFires.current.length; i++) {
@@ -151,7 +151,7 @@ const World = () => {
 
             case Options.FIRE:
                 {
-                    const firePosition = iPoint.clone().add(normal.clone().multiplyScalar(0.09 * height))
+                    const firePosition = iPoint.clone().add(iPoint.clone().normalize().multiplyScalar(0.035))
                     const fireRotation = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal));
                     decrementFire();
 

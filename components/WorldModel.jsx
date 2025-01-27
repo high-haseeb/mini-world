@@ -24,7 +24,7 @@ const WorldShader = ({ handlePointerDown }) => {
     const vertexMain = `
         vPosition = position;
         vUv = uv;
-        float delta = 0.1;
+        float delta = 0.0;
         vec3 texel = texture2D(uSDF, uv).rgb;
         // height = smoothstep(0.0, 1.0, texel.r + texel.g + texel.b);
         height = texel.r + texel.g + texel.b;
