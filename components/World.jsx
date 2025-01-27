@@ -161,7 +161,7 @@ const World = () => {
                         if (firePosition.distanceTo(treePos) < fireInfluenceRadius && !treesState[i].burned) {
                             removeTree(i);
                             treeBurned = true;
-                            refFires.current[fires - 1].position.copy(treePos);
+                            refFires.current[fires - 1].position.copy(firePosition);
                             refFires.current[fires - 1].rotation.copy(treesState[i].rotation);
                         }
                     }
