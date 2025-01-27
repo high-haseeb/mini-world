@@ -22,6 +22,13 @@ const useStateStore = create((set) => ({
     decrementTree: () => set((state) => ({ trees: state.trees - 1 })),
 }));
 
+export const useWarnStore = create((set) => ({
+    warn: false,
+    warnTimeout: 3000,
+    setWarn:    () => set({ warn: true }),
+    removeWarn: () => set({ warn: false }),
+}));
+
 export const useTreesStore = create((set) => ({
     numTrees: 0,
     addTree: (position, rotation, burned) =>

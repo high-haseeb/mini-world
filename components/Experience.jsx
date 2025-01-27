@@ -2,13 +2,24 @@
 import { Environment, OrbitControls, Stats } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import World from './World';
-import useStateStore from '@/stores/stateStore';
+import useStateStore, { useWarnStore } from '@/stores/stateStore';
+import { useEffect } from 'react';
 
 const Experience = () => {
     const { autoRotate } = useStateStore();
+    const { warn, warnTimeout, removeWarn } = useWarnStore();
+
+    useEffect(() => {
+        if (warn) setTimeout(() => removeWarn(), warnTimeout);
+    }, [warn]);
 
     return (
         <div className="w-full h-full">
+            { warn && <div
+                className='fixed top-10 left-1/2 -translate-x-1/2 bg-red-500 rounded-full font-bold text-white text-xl py-2 px-8 animate-inOut'>
+                ❌ Please Place the elements on Land!
+            </div> 
+            }
             <Canvas className="w-full h-full" camera={{ position: [0, 0, -7] }} shadows>
                 <Stats />
                 <ambientLight intensity={1.0} />

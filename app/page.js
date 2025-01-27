@@ -1,6 +1,6 @@
 "use client";
 import Experience from "@/components/Experience";
-import useStateStore, { Options } from "@/stores/stateStore";
+import useStateStore, { Options, useTreesStore } from "@/stores/stateStore";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from 'react';
@@ -18,6 +18,7 @@ export default function Home() {
 
 const Stats = () => {
     const { fires, rains } = useStateStore();
+    const { numTrees } = useTreesStore();
 
     return (
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col select-none">
@@ -25,15 +26,23 @@ const Stats = () => {
                 <span className="text-base lg:text-2xl font-semibold capitalize">fires</span>
                 <span className="text-base lg:text-2xl font-semibold capitalize">{fires}/100</span>
                 <div className="w-64 h-2 rounded-full bg-yellow-400 relative hidden lg:block">
-                    <div className="absolute top-0 left-0 h-2 rounded-full bg-orange-400" style={{ width: `${(fires / 100 * 16)}rem` }}></div>
+                    <div className="absolute top-0 left-0 h-2 rounded-full bg-red-700" style={{ width: `${(fires / 100 * 16)}rem` }}></div>
                 </div>
             </div>
 
             <div className="flex items-center justify-center gap-2">
                 <span className="text-base lg:text-2xl font-semibold capitalize">rains</span>
                 <span className="text-base lg:text-2xl font-semibold capitalize">{rains}/100</span>
-                <div className="w-64 h-2 rounded-full bg-yellow-400 relative hidden lg:block">
-                    <div className="absolute top-0 left-0 h-2 rounded-full bg-orange-400" style={{ width: `${(rains / 100 * 16)}rem` }}></div>
+                <div className="w-64 h-2 rounded-full bg-blue-400 relative hidden lg:block">
+                    <div className="absolute top-0 left-0 h-2 rounded-full bg-blue-800" style={{ width: `${(rains / 100 * 16)}rem` }}></div>
+                </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-2">
+                <span className="text-base lg:text-2xl font-semibold capitalize">trees</span>
+                <span className="text-base lg:text-2xl font-semibold capitalize">{numTrees}/100</span>
+                <div className="w-64 h-2 rounded-full bg-green-400 relative hidden lg:block">
+                    <div className="absolute top-0 left-0 h-2 rounded-full bg-green-800" style={{ width: `${(numTrees / 100 * 16)}rem` }}></div>
                 </div>
             </div>
         </div>

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import Fire from './Fire';
 import Rain from './Rain';
-import useStateStore, { Options, useTreesStore } from '@/stores/stateStore';
+import useStateStore, { Options, useTreesStore, useWarnStore } from '@/stores/stateStore';
 import WorldShader from './WorldModel';
 import Trees from './Trees';
 
@@ -99,6 +99,7 @@ const World = () => {
     };
 
     const { treesState, removeTree, fireInfluenceRadius } = useTreesStore();
+    const { setWarn } = useWarnStore();
 
     // function smoothstep(edge0, edge1, x) {
     //     const t = Math.max(0.0, Math.min(1.0, (x - edge0) / (edge1 - edge0)));
@@ -113,7 +114,7 @@ const World = () => {
         const v = e.uv.y;
         const color = getTexelValue(u, v, worldMapImageData);
         if (color.g == 0) {
-            console.warn("please place the fire on land :)")
+            setWarn();
             isValidPlace = false;
         }
 
@@ -131,7 +132,6 @@ const World = () => {
             case Options.RAIN:
                 {
                     const cloudPosition = iPoint.clone().addScaledVector(normal.clone(), 0.3 * height);
-                    console.log("cloud position", cloudPosition);
                     const index = rains - 1;
                     cloudGroupRefA.current[index].position.copy(cloudPosition);
                     const rotation = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal))
