@@ -11,7 +11,7 @@ import Trees from './Trees';
 import FireParticleSystem from './SmokeEffect';
 
 const World = () => {
-    const { addTree } = useTreesStore();
+    const { addTree, highlighted, highlightedPosition, highlightIndex } = useTreesStore();
     const { fires, rains, decrementFire, decrementRain, activeOption } = useStateStore();
 
     const refClouds = useRef([]);
@@ -159,13 +159,14 @@ const World = () => {
                     decrementFire();
 
                     let treeBurned = false;
-                    for (let i = 0; i < treesState.length; i++) {
-                        const treePos = treesState[i].position;
-                        if (!treesState[i].burned && firePosition.distanceTo(treePos) < fireInfluenceRadius && !treesState[i].burned) {
-                            removeTree(i);
+
+                    if (highlighted) {
+                        console.log(highlightedPosition)
+                        if (!treesState[highlightIndex].burned) {
+                            removeTree(highlightIndex);
                             treeBurned = true;
-                            refFires.current[fires - 1].position.copy(treesState[i].position);
-                            refFires.current[fires - 1].rotation.copy(treesState[i].rotation);
+                            refFires.current[fires - 1].position.copy(treesState[highlightIndex].position);
+                            refFires.current[fires - 1].rotation.copy(treesState[highlightIndex].rotation);
                             refFires.current[fires - 1].transparent = true;
                             refFires.current[fires - 1].smoke = true;
                             setTimeout(() => {
@@ -176,6 +177,25 @@ const World = () => {
                             }, 6000);
                          }
                     }
+
+                    // for (let i = 0; i < treesState.length; i++) {
+                    //     const treePos = treesState[i].position;
+                    //     if (!treesState[i].burned && firePosition.distanceTo(treePos) < fireInfluenceRadius && !treesState[i].burned) {
+                    //         removeTree(i);
+                    //         treeBurned = true;
+                    //         refFires.current[fires - 1].position.copy(treesState[i].position);
+                    //         refFires.current[fires - 1].rotation.copy(treesState[i].rotation);
+                    //         refFires.current[fires - 1].transparent = true;
+                    //         refFires.current[fires - 1].smoke = true;
+                    //         setTimeout(() => {
+                    //              refFires.current[fires - 1].shouldAnimate = true; 
+                    //              setTimeout(() => {
+                    //                 refFires.current[fires - 1].smoke = false 
+                    //             }, 3000);
+                    //         }, 6000);
+                    //      }
+                    // }
+
                     if (!treeBurned) {
                         refFires.current[fires - 1].position.copy(firePosition);
                         refFires.current[fires - 1].rotation.copy(fireRotation);

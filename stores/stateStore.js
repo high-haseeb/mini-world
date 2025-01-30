@@ -46,6 +46,13 @@ export const useTreesStore = create((set) => ({
                 treesState: updatedTreesState,
             };
         }),
+    highlighted: false,
+    setHighlight: (highlighted) => set(() => ({ highlighted: highlighted })),
+    highlightedPosition: [0, 0, 0],
+    setHighlightPosition: (highlightedPosition) => set(() => ({ highlightedPosition: highlightedPosition  })),
+    highlightIndex : 0, 
+    setHighlightIndex: (highlightIndex) => set(() => ({ highlightIndex: highlightIndex  })),
+
     treesState: [],
     fireInfluenceRadius: 0.1, // the radius in which fire would burn a tree
 }));

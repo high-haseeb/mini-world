@@ -8,7 +8,7 @@ const Trees = () => {
         <group>
             {
                 treesState.map((state, idx) => (
-                    <Tree {...state} key={idx} />
+                    <Tree {...state} index={idx} key={idx} />
                 ))
             }
         </group>

@@ -3,8 +3,10 @@ import { useFrame } from "@react-three/fiber";
 import { Vector3, Color } from "three";
 import { lerp } from 'three/src/math/MathUtils';
 import { ToonShader } from "@/shaders/ToonShader";
+import { useTreesStore } from "@/stores/stateStore";
 
-const Tree = ({ position, rotation, burned, setBurned, ...props }) => {
+const Tree = ({ position, rotation, burned, setBurned, index, ...props }) => {
+    const { setHighlight, setHighlightPosition, setHighlightIndex } = useTreesStore();
     const treeRef = useRef(null);
     const uniformsToon = useRef({
         uTime: { value: 0.0 },
@@ -53,8 +55,16 @@ const Tree = ({ position, rotation, burned, setBurned, ...props }) => {
             rotation={rotation}
             scale={0.0}
             dispose={null}
-            onPointerEnter={() => uniformsToon.current.hovered.value = 1.0}
-            onPointerLeave={() => uniformsToon.current.hovered.value = 0.0}
+            onPointerEnter={() => {
+                uniformsToon.current.hovered.value = 1.0;
+                setHighlight(true);
+                setHighlightIndex(index);
+                setHighlightPosition([ treeRef.current.position.x, treeRef.current.position.y, treeRef.current.position.z ]);
+            }}
+            onPointerLeave={() => {
+                uniformsToon.current.hovered.value = 0.0;
+                setHighlight(false);
+            }}
             {...props}
         >
             <mesh castShadow receiveShadow position={[0, 0, 0]} >
