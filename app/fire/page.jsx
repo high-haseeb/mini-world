@@ -7,12 +7,14 @@ import { useFrame } from "@react-three/fiber";
 import { OrbitControls } from '@react-three/drei';
 import { useControls } from 'leva';
 import { Color } from 'three';
+import Tree from '@/components/Tree';
 
 const FireConfig = () => {
     return (
         <div className='bg-[#181818] w-screen h-screen overflow-hidden'>
             <Overlay />
             <Canvas className='w-full h-full'>
+                <ambientLight />
                 <OrbitControls />
                 <FireConfigurator />
             </Canvas>
@@ -58,10 +60,11 @@ const FireConfigurator = () => {
             uColor2: { value: new Color(color_b) },
             uColor3: { value: new Color(color_c) },
             uColor4: { value: new Color(color_d) },
-            uThresholdA: {value: thresholdA},
-            uThresholdB: {value: thresholdB},
-            uThresholdC: {value: thresholdC},
-            uIOR: {value: ior}
+            uThresholdA: { value: thresholdA },
+            uThresholdB: { value: thresholdB },
+            uThresholdC: { value: thresholdC },
+            uIOR: {value: ior},
+            u_opacity: { value: 0.5 },
         }
     );
 
@@ -94,15 +97,19 @@ const FireConfigurator = () => {
     });
 
     return (
-        <mesh  >
-            <sphereGeometry args={[1, 32, 32]} />
-            <shaderMaterial
-                vertexShader={vertexShader}
-                fragmentShader={fragmentShader}
-                uniforms={uniforms.current}
-                attach="material"
-            />
-        </mesh>
+        <group>
+            <Tree position={[0, 0, 0]} rotation={[0, 0, 0]} burned={true} scale={0.6} />
+            <mesh  >
+                <sphereGeometry args={[1, 32, 32]} />
+                <shaderMaterial
+                    vertexShader={vertexShader}
+                    fragmentShader={fragmentShader}
+                    uniforms={uniforms.current}
+                    attach="material"
+                    transparent
+                />
+            </mesh>
+        </group>
     );
 };
 

@@ -25,7 +25,8 @@ const World = () => {
             initProps.push({ 
                 position:      new THREE.Vector3(),
                 normal:        new THREE.Vector3(),
-                shouldAnimate: false
+                shouldAnimate: false,
+                transparent:   false,
             });
         }
         setCloudPropsA([...initProps]);
@@ -158,14 +159,15 @@ const World = () => {
                     let treeBurned = false;
                     for (let i = 0; i < treesState.length; i++) {
                         const treePos = treesState[i].position;
-                        if (firePosition.distanceTo(treePos) < fireInfluenceRadius && !treesState[i].burned) {
+                        if (!treesState[i].burned && firePosition.distanceTo(treePos) < fireInfluenceRadius && !treesState[i].burned) {
                             removeTree(i);
                             treeBurned = true;
-                            refFires.current[fires - 1].position.copy(firePosition);
+                            refFires.current[fires - 1].position.copy(treesState[i].position);
                             refFires.current[fires - 1].rotation.copy(treesState[i].rotation);
-                        }
+                            refFires.current[fires - 1].transparent = true;
+                            setTimeout(() => refFires.current[fires - 1].shouldAnimate = true, 6000);
+                         }
                     }
-
                     if (!treeBurned) {
                         refFires.current[fires - 1].position.copy(firePosition);
                         refFires.current[fires - 1].rotation.copy(fireRotation);
@@ -190,7 +192,6 @@ const World = () => {
                 </group>)
             )}
             <Trees />
-
             {
                 refFires.current.map((fire, index) => (
                     <Fire
@@ -202,7 +203,6 @@ const World = () => {
                     />
                 ))
             }
-
         </group>
     );
 };
