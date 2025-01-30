@@ -140,7 +140,7 @@ function getParticleSystem(params) {
                 maxLife: life,
                 rotation: Math.random() * 2.0 * Math.PI,
                 rotationRate: Math.random() * 0.01 - 0.005,
-                velocity: new THREE.Vector3(0, 1.5, 0),
+                velocity: origin.clone().multiplyScalar(2.0),
             });
         }
     }
