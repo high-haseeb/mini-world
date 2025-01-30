@@ -4,7 +4,7 @@ import { extend, useFrame } from '@react-three/fiber';
 
 extend({ LineBasicMaterial: THREE.LineBasicMaterial });
 
-const Rain = ({opacity}) => {
+const Rain = ({ opacity }) => {
     const rainRef = useRef();
     const noiseRef = useRef();
     const gCount = 500;

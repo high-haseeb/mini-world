@@ -248,7 +248,7 @@ const CloudModel = ({ index, shouldAnimate }) => {
                 speed={(index * 0.001) + 0.2}
                 opacity={cloudOpacity}
             />
-            <Rain opacity={rainOpacity} />
+            {cloudOpacity > 0.01 && <Rain opacity={rainOpacity} />}
         </group>
     )
 }
