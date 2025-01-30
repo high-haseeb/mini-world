@@ -8,6 +8,7 @@ import Rain from './Rain';
 import useStateStore, { Options, useTreesStore, useWarnStore } from '@/stores/stateStore';
 import WorldShader from './WorldModel';
 import Trees from './Trees';
+import FireParticleSystem from './SmokeEffect';
 
 const World = () => {
     const { addTree } = useTreesStore();
@@ -27,6 +28,7 @@ const World = () => {
                 normal:        new THREE.Vector3(),
                 shouldAnimate: false,
                 transparent:   false,
+                smoke:         false,
             });
         }
         setCloudPropsA([...initProps]);
@@ -165,7 +167,13 @@ const World = () => {
                             refFires.current[fires - 1].position.copy(treesState[i].position);
                             refFires.current[fires - 1].rotation.copy(treesState[i].rotation);
                             refFires.current[fires - 1].transparent = true;
-                            setTimeout(() => refFires.current[fires - 1].shouldAnimate = true, 6000);
+                            refFires.current[fires - 1].smoke = true;
+                            setTimeout(() => {
+                                 refFires.current[fires - 1].shouldAnimate = true; 
+                                 setTimeout(() => {
+                                    refFires.current[fires - 1].smoke = false 
+                                }, 3000);
+                            }, 6000);
                          }
                     }
                     if (!treeBurned) {
@@ -194,13 +202,16 @@ const World = () => {
             <Trees />
             {
                 refFires.current.map((fire, index) => (
-                    <Fire
-                        ref={el => refFires.current[index] = el}
-                        scale={0.05}
-                        index={index}
-                        key={`fire-${index}`}
-                        {...fire}
-                    />
+                    <>
+                        <Fire
+                            ref={el => refFires.current[index] = el}
+                            scale={0.05}
+                            index={index}
+                            key={`fire-${index}`}
+                            {...fire}
+                        />
+                        { fire.transparent && fire.smoke && <FireParticleSystem origin={fire.position} /> }
+                    </>
                 ))
             }
         </group>

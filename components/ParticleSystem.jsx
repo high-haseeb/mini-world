@@ -117,10 +117,10 @@ function getParticleSystem(params) {
     });
     sizeSpline.addPoint(0.0, 0.0);
     sizeSpline.addPoint(1.0, 1.0);
-    // max point size = 512; => console.log(ctx.getParameter(ctx.ALIASED_POINT_SIZE_RANGE));
-    const radius = 0.5;
+
+    const radius = 0.05;
     const maxLife = 1.5;
-    const maxSize = 3.0;
+    const maxSize = 0.2;
     let gdfsghk = 0.0;
     function _AddParticles(timeElapsed) {
         gdfsghk += timeElapsed;
@@ -158,14 +158,10 @@ function getParticleSystem(params) {
             angles.push(p.rotation);
         }
 
-        geometry.setAttribute(
-            'position', new THREE.Float32BufferAttribute(positions, 3));
-        geometry.setAttribute(
-            'size', new THREE.Float32BufferAttribute(sizes, 1));
-        geometry.setAttribute(
-            'aColor', new THREE.Float32BufferAttribute(colours, 4));
-        geometry.setAttribute(
-            'angle', new THREE.Float32BufferAttribute(angles, 1));
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+        geometry.setAttribute('aColor', new THREE.Float32BufferAttribute(colours, 4));
+        geometry.setAttribute('angle', new THREE.Float32BufferAttribute(angles, 1));
 
         geometry.attributes.position.needsUpdate = true;
         geometry.attributes.size.needsUpdate = true;
